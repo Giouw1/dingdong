@@ -1,0 +1,4 @@
+#Env variables
+.env    
+#DB's
+.db

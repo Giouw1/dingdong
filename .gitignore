@@ -2,3 +2,6 @@
 .env    
 #DB's
 .db
+.sqlite3
+#Pasta do repo
+/repositories

@@ -1,0 +1,2 @@
+I am refactoring ownerrepo to handle errors better and to use a proper log. I should
+refactor also the pytest instances and the class to make it completely viable. Only then I can move on to the next steps.

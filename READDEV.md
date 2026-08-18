@@ -1,10 +1,10 @@
 ## Pontos de desenvolvimento
 # Atual:
-# RoadMAP
 Gateway da notificação.
 Mudar os retornos dos gateways de user-- Sem "Sucessful alguma coisa mais"
 Fazer os configs corretamente
-Fazer um flaskzin além do aplicativo
+# RoadMAP
+Fazer Javascript
 Logging válido, em um file específico
 Com isso feito, temos tudo feito, mudar as estruturas de dados(isso vai me ajudar com a integridade referencial: teste dos user_id), os mutexes, e validar os testes direitinho: melhorar a estrutura de logging para dev e prod, e ser capaz de dar "nomes" de erros melhores. Usar cookies para lidar com os tokens de autorização, Hashear a senha lógico, e lidar com tratamento de strings
 

@@ -1,6 +1,5 @@
 ## Pontos de desenvolvimento
 # Atual:
-Terminar
 # RoadMAP
 Gateway da notificação.
 Mudar os retornos dos gateways de user-- Sem "Sucessful alguma coisa mais"

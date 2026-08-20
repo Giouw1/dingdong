@@ -8,3 +8,5 @@
 #DEV
 READDEV.MD
 .env.development
+#Isso aqui
+.gitignore

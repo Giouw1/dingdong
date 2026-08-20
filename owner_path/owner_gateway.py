@@ -1,7 +1,3 @@
-"""
-    A ideia é que esse Gateway vai receber as requisições do usuário de REGISTRAR, LOGAR, LER
-    
-    """
 #Dependências à serem injetadas pelo main nas rotas
 from infrastructure.ownerrepo import InMemoryOwnerRepo, get_owner_repo, get_id_generator, MockID_Generator
 from infrastructure.mailbox import InMemoryMailbox, get_main_mailbox

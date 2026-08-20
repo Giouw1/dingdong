@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from domain.entities import UserData, Nickname, OwnerID
 from domain.storage_interfaces import AbstractOwnerRepository, AbstractMailboxRepository , AbstractIDGenerator
+from typing import Union
 """
     A ideia é que esse Gateway vai receber as requisições do usuário de REGISTRAR, LOGAR, LER
     E esse OwnerUse Cases vai acoplar o Gateway à implementação do mailbox.
@@ -9,6 +10,7 @@ class DomainException(Exception): pass
 class RegistrationError(DomainException):pass
 class AuthenticationError(DomainException):pass
 class ResourceNotFoundError(DomainException): pass
+class InvalidPayloadError(DomainException): pass
 
 class AbstractOwnerUseCases(ABC):
     @abstractmethod
@@ -54,4 +56,13 @@ class AbstractOwnerUseCases(ABC):
         pass
     @abstractmethod
     def retrieve_id_by_nickname(self,nickname:Nickname)->OwnerID|ResourceNotFoundError:
+        pass
+
+
+class AbstractNotificatorUseCases(ABC):
+    @abstractmethod
+    def __init__():
+        pass
+    @abstractmethod
+    def notificate()->Union[ResourceNotFoundError,InvalidPayloadError,True]:
         pass

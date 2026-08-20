@@ -6,7 +6,7 @@ class AbstractMailboxRepository(ABC):
 
 
     @abstractmethod
-    def save(self,owner_id:OwnerID,payload:NotificationPayload)->bool:
+    def save(self,target_id:OwnerID,payload:NotificationPayload)->bool:
 
         """Armazenar a notificação em um dado repositório:
 
@@ -17,7 +17,7 @@ class AbstractMailboxRepository(ABC):
         pass
 
     @abstractmethod
-    def get_notifications(self,owner_id:OwnerID)->List[NotificationPayload]|None:
+    def get_notifications(self,target_id:OwnerID)->List[NotificationPayload]|None:
 
         """Ler as notificações que estão no dado repositório
         
@@ -25,7 +25,7 @@ class AbstractMailboxRepository(ABC):
         
         """
     @abstractmethod
-    def register_user(self,owner_id:OwnerID)->bool:
+    def register_user(self,target_id:OwnerID)->bool:
         """Registrar o novo usuário
             owner_id: [str]
 

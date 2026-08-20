@@ -1,7 +1,6 @@
-from infrastructure.ownerrepo import MockID_Generator, InMemoryOwnerRepo
-from domain.entities import OwnerID
-def test_generate_id():
-    mock_mailbox = InMemoryOwnerRepo()
-    generator = MockID_Generator(mock_mailbox)
-    id = generator.generate_id()
-    assert isinstance(id,str)
+from domain.storage_interfaces import AbstractIDGenerator
+
+
+def test_generate_id(mock_id_generator: AbstractIDGenerator):
+    id = mock_id_generator.generate_id()
+    assert isinstance(id, str)

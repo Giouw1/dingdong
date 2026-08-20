@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 import pytest
 import logging
-from infrastructure.mailbox import InMemoryMailbox
+from domain.storage_interfaces import AbstractMailboxRepository
 from infrastructure.opaque_token_repo import OpaqueTokenStore
 from hashlib import  md5
 
@@ -41,7 +41,7 @@ def test_get_notifications_unauthorized(client: TestClient):
     assert response.json()["detail"] == "User not logged in: session expired"
 
 
-def test_register_login_integration(client: TestClient, mock_main_mailbox: InMemoryMailbox, mock_store:OpaqueTokenStore):
+def test_register_login_integration(client: TestClient, mock_main_mailbox: AbstractMailboxRepository, mock_store:OpaqueTokenStore):
     valid_user_data = {
         "username": "test_user",
         "password": "securepassword",
@@ -53,7 +53,8 @@ def test_register_login_integration(client: TestClient, mock_main_mailbox: InMem
     assert mock_store.get_token(opaque_token=response.cookies.get("session_id")) == '1'
     assert response.json() != None
 
-def test_register_login_read_integration(client: TestClient, mock_main_mailbox: InMemoryMailbox, mock_store:OpaqueTokenStore):
+def test_register_login_read_integration(client: TestClient, mock_main_mailbox: AbstractMailboxRepository, mock_store:OpaqueTokenStore):
+
 
     
     response = client.post("/register", auth=("test_user","securepassword"))

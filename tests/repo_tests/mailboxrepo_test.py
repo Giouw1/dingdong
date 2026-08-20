@@ -1,63 +1,64 @@
-from domain.entities import NotificationPayload
-from infrastructure.mailbox import InMemoryMailbox
 from datetime import datetime
 import pytest
-import logging
-
-#Por ora, os testes usam o InMemory. Isso pode evoluir com o tempo, é claro, e os testes vão mudar de acordo com a funcionalidade.
-def test_registration():
-    repo = InMemoryMailbox()
-    repo.register_user("vasco")
-    assert "vasco" in repo.db
-def test_save_validid():
-    repo = InMemoryMailbox()
-    repo.register_user("vasco")
-    time =datetime.now()
-    repo.save("vasco",NotificationPayload(conteudo="Ok",lida=False,timestamp=time))
-    assert repo.db["vasco"] == [NotificationPayload(conteudo="Ok",lida=False,timestamp=time)]
-def test_save_invalidid(caplog):
-    repo = InMemoryMailbox()
-    result = repo.save("vasco",NotificationPayload(conteudo="Ok",lida=False,timestamp=datetime.now()))
-    assert result == False
-
-def test_register_repeatedid(caplog):
-    time =datetime.now()
-    repo = InMemoryMailbox()
-    repo.register_user("vasco")
-    repo.save("vasco",NotificationPayload(conteudo="Ok",lida=False,timestamp=time))
-
-    result = repo.register_user("vasco")
-    assert result == False
-    assert repo.db["vasco"] == [NotificationPayload(conteudo="Ok",lida=False,timestamp=time)]
-
-def test_read_invalidid():
-    repo = InMemoryMailbox()
-    result = repo.get_notifications("vasco")
-    assert result == None
+from domain.entities import NotificationPayload
+from domain.storage_interfaces import AbstractMailboxRepository
 
 
-def test_read_validid():
-    time =datetime.now()
+def test_registration(mock_mailbox: AbstractMailboxRepository):
+    result = mock_mailbox.register_user("vasco")
+    assert result == True
+    assert mock_mailbox.get_notifications("vasco") == []
 
-    repo = InMemoryMailbox()
-    repo.register_user("vasco")
-    repo.save("vasco",NotificationPayload(conteudo="Ok",lida=False,timestamp=time))
-    assert repo.get_notifications("vasco") == [NotificationPayload(conteudo="Ok",lida=False,timestamp=time)]
 
-def test_deletion_validid():
-    repo = InMemoryMailbox()
-    repo.register_user("vasco")
-    repo.delete_user("vasco")
-    assert "vasco" not in repo.db
-def test_deletion_invalidid():
-    repo = InMemoryMailbox()
-    result = repo.delete_user("vasco")
+def test_save_validid(mock_mailbox: AbstractMailboxRepository):
+    mock_mailbox.register_user("vasco")
+    time = datetime.now()
+    payload = NotificationPayload(conteudo="Ok", lida=False, timestamp=time)
+    result = mock_mailbox.save("vasco", payload)
+    assert result == True
+    assert mock_mailbox.get_notifications("vasco") == [payload]
+
+
+def test_save_invalidid(mock_mailbox: AbstractMailboxRepository):
+    result = mock_mailbox.save("vasco", NotificationPayload(conteudo="Ok", lida=False, timestamp=datetime.now()))
     assert result == False
 
 
+def test_register_repeatedid(mock_mailbox: AbstractMailboxRepository):
+    time = datetime.now()
+    mock_mailbox.register_user("vasco")
+    payload = NotificationPayload(conteudo="Ok", lida=False, timestamp=time)
+    mock_mailbox.save("vasco", payload)
 
-#Não estou testando alguns casos, mas ok.   
-#Fazer agora a integração.
+    result = mock_mailbox.register_user("vasco")
+    assert result == False
+    assert mock_mailbox.get_notifications("vasco") == [payload]
+
+
+def test_read_invalidid(mock_mailbox: AbstractMailboxRepository):
+    result = mock_mailbox.get_notifications("vasco")
+    assert result is None
+
+
+def test_read_validid(mock_mailbox: AbstractMailboxRepository):
+    time = datetime.now()
+    mock_mailbox.register_user("vasco")
+    payload = NotificationPayload(conteudo="Ok", lida=False, timestamp=time)
+    mock_mailbox.save("vasco", payload)
+    assert mock_mailbox.get_notifications("vasco") == [payload]
+
+
+def test_deletion_validid(mock_mailbox: AbstractMailboxRepository):
+    mock_mailbox.register_user("vasco")
+    result = mock_mailbox.delete_user("vasco")
+    assert result == True
+    assert mock_mailbox.get_notifications("vasco") is None
+
+
+def test_deletion_invalidid(mock_mailbox: AbstractMailboxRepository):
+    result = mock_mailbox.delete_user("vasco")
+    assert result == False
+
 
 
 

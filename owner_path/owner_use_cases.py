@@ -1,4 +1,4 @@
-from domain.abstract_owner_usecases import AbstractOwnerUseCases
+from domain.abstract_usecases import AbstractOwnerUseCases
 from domain.storage_interfaces import AbstractOwnerRepository, AbstractIDGenerator
 from domain.storage_interfaces import AbstractMailboxRepository
 from domain.entities import UserData, NotificationPayload, Nickname, OwnerID

@@ -7,7 +7,12 @@ on:
       - main
   pull_request:
     branches:
+      - develop
       - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -22,6 +27,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: "pip"
+          cache-dependency-path: "requirements-dev.txt"
           
       - name: Resolve and Install Dependencies
         run: |
@@ -30,4 +36,4 @@ jobs:
           
       - name: Execute Test Suite
         run: |
-          pytest
+          python -m pytest

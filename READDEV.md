@@ -6,7 +6,7 @@ Fazer os configs corretamente
 # RoadMAP
 Fazer Javascript
 Logging válido, em um file específico
-Com isso feito, temos tudo feito, mudar as estruturas de dados(isso vai me ajudar com a integridade referencial: teste dos user_id), os mutexes, e validar os testes direitinho: melhorar a estrutura de logging para dev e prod, e ser capaz de dar "nomes" de erros melhores. Usar cookies para lidar com os tokens de autorização, Hashear a senha lógico, e lidar com tratamento de strings, futuro problema
+Com isso feito, temos tudo feito, mudar as estruturas de dados(isso vai me ajudar com a integridade referencial: teste dos user_id), os mutexes. melhorar a estrutura de logging para dev e prod, e ser capaz de dar "nomes" de erros melhores. Usar cookies para lidar com os tokens de autorização, Hashear a senha lógico, e lidar com tratamento de strings, futuro problema
 
 Jogar a semântica de erro para os casos de uso, como deveria ser (e não é)
 Número de notificações vai ser interessante no use cases do owner (funciona bem para a aplicação), diferenciando entre read e unread. 

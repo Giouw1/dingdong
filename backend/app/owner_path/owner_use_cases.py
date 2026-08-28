@@ -1,6 +1,6 @@
 from app.domain.abstract_usecases import AbstractOwnerUseCases
-from backend.app.domain.infrastructure_interfaces import AbstractOwnerRepository, AbstractIDGenerator
-from backend.app.domain.infrastructure_interfaces import AbstractMailboxRepository
+from app.domain.storage_interfaces import AbstractOwnerRepository, AbstractIDGenerator
+from app.domain.storage_interfaces import AbstractMailboxRepository
 from app.domain.entities import UserData, NotificationPayload, Nickname, OwnerID
 import logging
 from typing import List

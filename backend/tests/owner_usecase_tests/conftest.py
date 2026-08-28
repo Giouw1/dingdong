@@ -2,7 +2,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from configs.config import get_overall_settings
-from backend.app.domain.infrastructure_interfaces import (
+from app.domain.storage_interfaces import (
     AbstractMailboxRepository,
     AbstractOwnerRepository,
     AbstractIDGenerator,

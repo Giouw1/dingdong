@@ -1,7 +1,7 @@
 #The idea here is to make repos for two reasons: Username, password, personal data, target id
 from typing import Dict, Tuple
 from app.domain.entities import UserData, OwnerID,Nickname
-from backend.app.domain.infrastructure_interfaces import AbstractOwnerRepository,AbstractIDGenerator
+from app.domain.storage_interfaces import AbstractOwnerRepository,AbstractIDGenerator
 import logging
 #Lidar com caso owner id não estiver no outro DB, provavelmente algum marcador nesse DB aqui.
 #The error names are not that cool

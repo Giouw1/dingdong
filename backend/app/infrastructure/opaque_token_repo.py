@@ -2,7 +2,7 @@ import secrets
 from collections import OrderedDict
 from typing import Optional
 from app.domain.entities import UserData,OwnerID
-from backend.app.domain.infrastructure_interfaces import OpaqueTokenStore
+from app.domain.storage_interfaces import OpaqueTokenStore
 class OpaqueTokenStore:
     def __init__(self, capacity: int = 10000) -> None:
         """

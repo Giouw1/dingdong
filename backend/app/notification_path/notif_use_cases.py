@@ -1,5 +1,5 @@
 from app.domain.abstract_usecases import AbstractNotificatorUseCases
-from backend.app.domain.infrastructure_interfaces import AbstractOwnerRepository,AbstractMailboxRepository
+from app.domain.storage_interfaces import AbstractOwnerRepository,AbstractMailboxRepository
 from app.domain.entities import Nickname, NotificationPayload, PayloadBuildError
 from typing import Union
 from datetime import datetime

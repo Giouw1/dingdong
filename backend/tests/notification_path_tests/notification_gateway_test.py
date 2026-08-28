@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from fastapi import HTTPException, status
 from datetime import datetime
 from app.domain.entities import NotificationPayload, OwnerID, UserData
-from backend.app.domain.infrastructure_interfaces import AbstractOwnerRepository, AbstractMailboxRepository
+from app.domain.storage_interfaces import AbstractOwnerRepository, AbstractMailboxRepository
 
 def test_notificate(client: TestClient, mock_main_mailbox: AbstractMailboxRepository, mock_owner_mailbox: AbstractOwnerRepository):
     mmb = mock_main_mailbox

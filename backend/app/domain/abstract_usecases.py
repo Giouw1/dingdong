@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from app.domain.entities import UserData, Nickname, OwnerID, NotificationPayload
-from backend.app.domain.infrastructure_interfaces import AbstractOwnerRepository, AbstractMailboxRepository , AbstractIDGenerator
+from app.domain.storage_interfaces import AbstractOwnerRepository, AbstractMailboxRepository , AbstractIDGenerator
 from typing import Union, List
 """
     A ideia é que esse Gateway vai receber as requisições do usuário de REGISTRAR, LOGAR, LER

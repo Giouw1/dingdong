@@ -1,5 +1,5 @@
 
-from backend.app.domain.infrastructure_interfaces import AbstractMailboxRepository
+from app.domain.storage_interfaces import AbstractMailboxRepository
 from app.domain.entities import NotificationPayload, OwnerID
 from pathlib import Path
 from typing import Dict,List, Any

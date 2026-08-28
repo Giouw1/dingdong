@@ -1,5 +1,5 @@
 import pytest
-from backend.app.domain.infrastructure_interfaces import (
+from app.domain.storage_interfaces import (
     AbstractMailboxRepository,
     AbstractOwnerRepository,
     AbstractIDGenerator,

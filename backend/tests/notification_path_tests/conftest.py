@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from app.notification_path.notif_gateway import notif_router
 from app.notification_path.notif_use_cases import get_notifier_use_cases, Notificator_UseCases
-from backend.app.domain.infrastructure_interfaces import AbstractMailboxRepository, AbstractOwnerRepository
+from app.domain.storage_interfaces import AbstractMailboxRepository, AbstractOwnerRepository
 from app.infrastructure.mailbox import InMemoryMailbox
 from app.infrastructure.ownerrepo import InMemoryOwnerRepo
 

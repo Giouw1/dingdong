@@ -15,7 +15,7 @@ class NotificationPayload:
     timestamp: Optional[datetime]
     
     def __post_init__(self):
-        if len(self.conteudo>250):
+        if len(self.conteudo)>250:
             raise PayloadBuildError("Unsupported payload")
 
 

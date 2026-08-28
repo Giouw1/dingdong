@@ -53,7 +53,7 @@ def test_invalid_payload_save(
     mock_main_mailbox.register_user("1")
     notifusecases = Notificator_UseCases(notifmailbox=mock_main_mailbox, ownermailbox=mock_owner_mailbox)
     with pytest.raises(InvalidPayloadError):
-        notifusecases.notificate("vasco", payload=12345)
+        notifusecases.notificate("vasco", payload=f"{[i for i in range(260)]}")
     assert mock_main_mailbox.get_notifications("1") == []
 
 

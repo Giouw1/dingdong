@@ -1,20 +1,26 @@
-#Agora a ideia é criar o gateway do usuário?
-#Main is going to set universal variables, as mailboxes db's, for example.
-
-
-#Aqui instanciar as factories
-
-from infrastructure.mailbox import InMemoryMailbox, get_main_mailbox
-from infrastructure.ownerrepo import InMemoryOwnerRepo, MockID_Generator, get_owner_repo, get_id_generator
-from infrastructure.opaque_token_repo import OpaqueTokenStore, get_opaque_token_store
-from owner_path.owner_use_cases import OwnerUseCases, get_owner_use_cases
-from owner_path.owner_gateway import router as owner_router
+from app.infrastructure.mailbox import InMemoryMailbox, get_main_mailbox
+from app.infrastructure.ownerrepo import InMemoryOwnerRepo, MockID_Generator, get_owner_repo, get_id_generator
+from app.infrastructure.opaque_token_repo import OpaqueTokenStore, get_opaque_token_store
+from app.owner_path.owner_use_cases import OwnerUseCases, get_owner_use_cases
+from app.owner_path.owner_gateway import router as owner_router
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from configs.config import get_overall_settings
-from notification_path.notif_gateway import notif_router
-from notification_path.notif_use_cases import Notificator_UseCases,get_notifier_use_cases
+from app.notification_path.notif_gateway import notif_router
+from app.notification_path.notif_use_cases import Notificator_UseCases,get_notifier_use_cases
 overallsettings = get_overall_settings()
 app = FastAPI()
+#Parte de CORS, verificar e usar nas configurações antes de jogar a público.
+origins = [
+"*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,          # Allows specified domains
+    allow_credentials=True,         # Allows cookies and credentials
+    allow_methods=["*"],            # Allows all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],            # Allows all request headers
+)
 
 main_repo_instance = InMemoryMailbox()
 owner_repo_instance = InMemoryOwnerRepo()

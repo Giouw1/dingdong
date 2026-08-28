@@ -1,6 +1,6 @@
 import pytest
-from domain.entities import UserData, OwnerID, Nickname
-from domain.storage_interfaces import (
+from app.domain.entities import UserData, OwnerID, Nickname
+from app.domain.storage_interfaces import (
     AbstractOwnerRepository,
     AbstractMailboxRepository,
     AbstractIDGenerator,

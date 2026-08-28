@@ -2,16 +2,16 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from configs.config import get_overall_settings
-from domain.storage_interfaces import (
+from app.domain.storage_interfaces import (
     AbstractMailboxRepository,
     AbstractOwnerRepository,
     AbstractIDGenerator,
 )
-from infrastructure.mailbox import InMemoryMailbox
-from infrastructure.ownerrepo import InMemoryOwnerRepo, MockID_Generator
-from infrastructure.opaque_token_repo import OpaqueTokenStore, get_opaque_token_store
-from owner_path.owner_gateway import router
-from owner_path.owner_use_cases import OwnerUseCases, get_owner_use_cases
+from app.infrastructure.mailbox import InMemoryMailbox
+from app.infrastructure.ownerrepo import InMemoryOwnerRepo, MockID_Generator
+from app.infrastructure.opaque_token_repo import OpaqueTokenStore, get_opaque_token_store
+from app.owner_path.owner_gateway import router
+from app.owner_path.owner_use_cases import OwnerUseCases, get_owner_use_cases
 
 
 @pytest.fixture

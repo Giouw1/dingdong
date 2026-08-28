@@ -1,6 +1,6 @@
-from domain.abstract_usecases import AbstractNotificatorUseCases
-from domain.storage_interfaces import AbstractOwnerRepository,AbstractMailboxRepository
-from domain.entities import Nickname, NotificationPayload
+from app.domain.abstract_usecases import AbstractNotificatorUseCases
+from app.domain.storage_interfaces import AbstractOwnerRepository,AbstractMailboxRepository
+from app.domain.entities import Nickname, NotificationPayload, PayloadBuildError
 from typing import Union
 from datetime import datetime
 
@@ -22,20 +22,21 @@ class Notificator_UseCases(AbstractNotificatorUseCases):
         Inserts a notification in a mailbox.
         Constructs the NotificationPayload internally with metadata.
         """
-        if payload is not None and not isinstance(payload, str):
-            raise InvalidPayloadError("Payload must be a string or None")
+            
 
         owner_id = self.ownermailbox.get_user_id_by_nickname(nickname=nickname)
         if owner_id is None:
             raise ResourceNotFoundError("There is no User with such Nickname")
 
         conteudo = payload if payload is not None else f"Notif at {datetime.now()}"
-        notification = NotificationPayload(
-            conteudo=conteudo,
-            lida=False,
-            timestamp=datetime.now(),
-        )
-
+        try:
+            notification = NotificationPayload(
+                conteudo=conteudo,
+                lida=False,
+                timestamp=datetime.now(),
+            )
+        except PayloadBuildError:
+            raise InvalidPayloadError("Invalid data for the payload")
         saved = self.notifmailbox.save(target_id=owner_id, payload=notification)
         if not saved:
             raise ResourceNotFoundError("Mailbox does not exist for this user")

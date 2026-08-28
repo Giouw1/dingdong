@@ -1,8 +1,8 @@
 import datetime
 import pytest
-from domain.entities import NotificationPayload, OwnerID, UserData, Nickname
-from domain.storage_interfaces import AbstractMailboxRepository, AbstractOwnerRepository
-from notification_path.notif_use_cases import (
+from app.domain.entities import NotificationPayload, OwnerID, UserData, Nickname
+from app.domain.storage_interfaces import AbstractMailboxRepository, AbstractOwnerRepository
+from app.notification_path.notif_use_cases import (
     Notificator_UseCases,
     ResourceNotFoundError,
     InvalidPayloadError,

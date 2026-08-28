@@ -1,59 +1,45 @@
 #Dependências à serem injetadas pelo main nas rotas
-from infrastructure.ownerrepo import InMemoryOwnerRepo, get_owner_repo, get_id_generator, MockID_Generator
-from infrastructure.mailbox import InMemoryMailbox, get_main_mailbox
-from owner_path.owner_use_cases import OwnerUseCases, get_owner_use_cases, RegistrationError,ResourceNotFoundError, AuthenticationError
-from infrastructure.opaque_token_repo import OpaqueTokenStore, get_opaque_token_store
+from app.infrastructure.ownerrepo import InMemoryOwnerRepo, get_owner_repo, get_id_generator, MockID_Generator
+from app.infrastructure.mailbox import InMemoryMailbox, get_main_mailbox
+from app.owner_path.owner_use_cases import OwnerUseCases, get_owner_use_cases, RegistrationError,ResourceNotFoundError, AuthenticationError
+from app.infrastructure.opaque_token_repo import OpaqueTokenStore, get_opaque_token_store
 
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi import APIRouter, Depends, HTTPException, status, Header, Query, Response, Cookie
-from domain.entities import UserData, NotificationPayload, OwnerID, Nickname
 from typing import List, Any, Dict
 from pydantic import BaseModel
 import logging
-from hashlib import md5
 from configs.config import get_overall_settings, OverallSettings
 
 router = APIRouter()
 security = HTTPBasic()
 
 
-class UserRegisterResponse(BaseModel):
-    """
-    Formato de resposta ao registro
-    """
-    id: str
 
-
-@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=UserRegisterResponse, tags=["Registro de usuário"])
+@router.post("/register", status_code=status.HTTP_204_NO_CONTENT, tags=["Registro de usuário"])
 async def register(userdata: HTTPBasicCredentials = Depends(security),
                 usecases: OwnerUseCases = Depends(get_owner_use_cases)):
     try:
         username_extraido = userdata.username
         password_extraido = userdata.password
-        true_user_data = UserData(username=username_extraido, password=password_extraido)
-        id = usecases.register(user_data=true_user_data)
-        #Errado, a cripto deve ser feita internamente   
-        usecases.register_nickname(owner_id=id, nickname=md5((str(username_extraido)+str(password_extraido)).encode("utf-8")).hexdigest())
-        return UserRegisterResponse(id=str(id))
+        id = usecases.register(username=username_extraido,password=password_extraido)
     except RegistrationError:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,   
         )
 
 
-@router.post("/login", response_model=Nickname, tags=["Rota de login"])
+@router.post("/login", response_model=str|None, tags=["Rota de login"])
 async def login(response: Response,
                 userdata: HTTPBasicCredentials = Depends(security),
                 store: OpaqueTokenStore = Depends(get_opaque_token_store),
                 usecases: OwnerUseCases = Depends(get_owner_use_cases),
                 settings: OverallSettings = Depends(get_overall_settings)
                 ):
-    #Depois averiguar problemas com esse login aqui, possivelmente perigos de login
     try:
         username_extraido = userdata.username
         password_extraida = userdata.password
-        owner_id = usecases.login(user_data=UserData(username=username_extraido, password=password_extraida))
-        nickname = usecases.retrieve_nickname(owner_id=owner_id)
+        owner_id = usecases.login(username=username_extraido, password=password_extraida)
     except AuthenticationError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, 
@@ -68,10 +54,16 @@ async def login(response: Response,
         samesite="lax", # Mitigates Cross-Site Request Forgery (CSRF)
         max_age=3600    # Hard expiration in seconds (1 hour)
     )
-    return nickname
+    try:
+        nickname = usecases.retrieve_nickname(owner_id=owner_id)
+        return nickname
+    except ResourceNotFoundError:
+        response.status_code = status.HTTP_204_NO_CONTENT
+        return 
 
 
-@router.get("/notifications", response_model=List[NotificationPayload]|List[Any], tags=["Verificar notificações"])
+
+@router.get("/notifications", response_model=List|List[Any], tags=["Verificar notificações"])
 async def get_notifications(opaque_owner_id: str = Cookie(..., alias="session_id"),
                             msg_amount: int = Query(default=1, description="Message amount", ge=1),
                             offset: int = Query(default=0, description="Message 'offset'", ge=0),
@@ -83,7 +75,7 @@ async def get_notifications(opaque_owner_id: str = Cookie(..., alias="session_id
     if (token == None):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, 
-            detail="User not logged in: session expired"
+            detail="User not logged in: session expired."
         )
     try:
         return usecases.get_notifications(owner_id=token, msg_amount=msg_amount, offset=offset)
@@ -102,7 +94,8 @@ async def logout(response: Response,
                 ):
     removal = store.remove_token(opaque_token=opaque_owner_id)
     if removal == False:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session already expired, logged out smoothly."
+)
     
     response.delete_cookie(
         key="session_id",
@@ -126,6 +119,8 @@ async def create_nick(opaque_owner_id: str = Cookie(..., alias='session_id'),
         logging.error("User not authenticated tried to log in")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Session expired, log in again."
+
         )
     try:
         usecases.register_nickname(owner_id=owner_id, nickname=nickname)
@@ -148,6 +143,7 @@ async def change_nick(opaque_owner_id: str = Cookie(..., alias="session_id"),
         logging.error("User not authenticated tried to log in")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Session expired, log in again."
         )
     try:
         usecases.change_nickname(owner_id=owner_id, nickname=nickname)
@@ -155,7 +151,7 @@ async def change_nick(opaque_owner_id: str = Cookie(..., alias="session_id"),
     except RegistrationError as e:
         if str(e) == "There is already such nickname":
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Try to choose another nickname")
-    except ResourceNotFoundError as e:
+    except ResourceNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
@@ -171,6 +167,6 @@ async def retrieve_nick(opaque_owner_id: str = Cookie(..., alias="session_id"),
         )
     try:
         return usecases.retrieve_nickname(owner_id=owner_id)
-    except ResourceNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="There is no user/nickname attached to the user")
+    except ResourceNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="There is no nickname attached to the user: please register one")
 

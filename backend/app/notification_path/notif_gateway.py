@@ -1,12 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
-from notification_path.payload_validator import NotificationRequest
-from notification_path.notif_use_cases import (
+from pydantic import BaseModel
+from app.notification_path.notif_use_cases import (
     get_notifier_use_cases,
     Notificator_UseCases,
     ResourceNotFoundError,
     InvalidPayloadError,
 )
 from typing import Optional
+
+
+"""What is expected to come from network to build a payload"""
+class NotificationRequest(BaseModel):
+    payload: Optional[str] = None
 
 notif_router = APIRouter()
 

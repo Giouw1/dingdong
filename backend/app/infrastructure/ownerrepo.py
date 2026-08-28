@@ -1,7 +1,7 @@
 #The idea here is to make repos for two reasons: Username, password, personal data, target id
 from typing import Dict, Tuple
-from domain.entities import UserData, OwnerID,Nickname
-from domain.storage_interfaces import AbstractOwnerRepository,AbstractIDGenerator
+from app.domain.entities import UserData, OwnerID,Nickname
+from app.domain.storage_interfaces import AbstractOwnerRepository,AbstractIDGenerator
 import logging
 #Lidar com caso owner id não estiver no outro DB, provavelmente algum marcador nesse DB aqui.
 #The error names are not that cool
@@ -11,14 +11,14 @@ import logging
 
 class InMemoryOwnerRepo(AbstractOwnerRepository):
     def __init__(self):
-        self.db :Dict[UserData,int] =  dict()
+        self.db :Dict[UserData,OwnerID] =  dict()
         self.db_nick_to_id:Dict[Nickname,UserData] = dict()
         self.db_id_to_nick:Dict[UserData,Nickname] = dict()
 
-    def register_user(self, owner_id:int, user_data: UserData)->bool:
+    def register_user(self, owner_id:OwnerID, user_data: UserData)->bool:
         if user_data in self.db:
             return False
-        self.db[user_data] = (owner_id)
+        self.db[user_data] = owner_id
         return True
     def get_user_id(self,user_data:UserData)-> OwnerID|None:
         if user_data not in self.db:
@@ -67,7 +67,7 @@ class InMemoryOwnerRepo(AbstractOwnerRepository):
             return True
         
     
-    def get_user_id_by_nickname(self,nickname:Nickname)->int|None:
+    def get_user_id_by_nickname(self,nickname:Nickname)->OwnerID|None:
         if nickname not in self.db_nick_to_id:
             return None
         return self.db_nick_to_id[nickname]
@@ -84,8 +84,8 @@ class MockID_Generator(AbstractIDGenerator):
     def generate_id(self)-> OwnerID:
         maxvalue = 0
         for key,value in self.repository.db.items():
-            maxvalue = max(int(value),maxvalue)
-        return str(maxvalue+1)
+            maxvalue = max(int(value.owner_id),maxvalue)
+        return OwnerID(owner_id=str(maxvalue+1))
 
 def get_owner_repo()->InMemoryOwnerRepo:
     raise NotImplementedError("This dependency must be overridden by the main application.")

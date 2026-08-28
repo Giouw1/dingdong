@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List
-from domain.entities import Nickname, UserData, OwnerID, NotificationPayload
+from app.domain.entities import Nickname, UserData, OwnerID, NotificationPayload
 
 class AbstractMailboxRepository(ABC):
 

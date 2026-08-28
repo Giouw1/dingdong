@@ -1,11 +1,11 @@
 import pytest
-from domain.storage_interfaces import (
+from app.domain.storage_interfaces import (
     AbstractMailboxRepository,
     AbstractOwnerRepository,
     AbstractIDGenerator,
 )
-from infrastructure.mailbox import InMemoryMailbox
-from infrastructure.ownerrepo import InMemoryOwnerRepo, MockID_Generator
+from app.infrastructure.mailbox import InMemoryMailbox
+from app.infrastructure.ownerrepo import InMemoryOwnerRepo, MockID_Generator
 
 
 @pytest.fixture

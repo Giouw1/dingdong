@@ -1,4 +1,4 @@
-from app.domain.storage_interfaces import AbstractIDGenerator
+from backend.app.domain.infrastructure_interfaces import AbstractIDGenerator
 from app.domain.entities import OwnerID
 
 def test_generate_id(mock_id_generator: AbstractIDGenerator):

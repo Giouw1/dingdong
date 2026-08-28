@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 import pytest
 import logging
-from app.domain.storage_interfaces import AbstractMailboxRepository
+from backend.app.domain.infrastructure_interfaces import AbstractMailboxRepository
 from app.domain.entities import OwnerID
 from app.infrastructure.opaque_token_repo import OpaqueTokenStore
 from hashlib import  md5

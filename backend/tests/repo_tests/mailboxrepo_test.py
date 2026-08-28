@@ -1,7 +1,7 @@
 from datetime import datetime
 import pytest
 from app.domain.entities import NotificationPayload
-from app.domain.storage_interfaces import AbstractMailboxRepository
+from backend.app.domain.infrastructure_interfaces import AbstractMailboxRepository
 
 
 def test_registration(mock_mailbox: AbstractMailboxRepository):

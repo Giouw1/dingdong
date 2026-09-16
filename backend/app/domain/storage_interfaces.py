@@ -4,7 +4,6 @@ from app.domain.entities import Nickname, UserData, OwnerID, NotificationPayload
 
 class AbstractMailboxRepository(ABC):
 
-
     @abstractmethod
     def save(self,target_id:OwnerID,payload:NotificationPayload)->bool:
 
@@ -22,13 +21,6 @@ class AbstractMailboxRepository(ABC):
         """Ler as notificações que estão no dado repositório
         
             owner_id: [str]
-        
-        """
-    @abstractmethod
-    def register_user(self,target_id:OwnerID)->bool:
-        """Registrar o novo usuário
-            owner_id: [str]
-
         
         """
     @abstractmethod

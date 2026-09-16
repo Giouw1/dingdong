@@ -1,5 +1,5 @@
 import pytest
-from app.domain.entities import UserData, OwnerID, Nickname
+from app.domain.entities import UserData, OwnerID, Nickname, NotificationPayload
 from app.domain.storage_interfaces import (
     AbstractMailboxRepository,
     AbstractOwnerRepository,
@@ -11,7 +11,7 @@ from app.owner_path.owner_use_cases import (
     RegistrationError,
     ResourceNotFoundError,
 )
-
+from datetime import datetime
 
 def test_register_allvalid(
     mock_main_mailbox: AbstractMailboxRepository,
@@ -21,7 +21,6 @@ def test_register_allvalid(
     usecases = OwnerUseCases(ownermailbox=mock_owner_repo, notifmailbox=mock_main_mailbox, id_generator=mock_id_generator)
     result = usecases.register(username="gio", password="vanni")
     assert mock_owner_repo.get_user_id(user_data=UserData(username="gio", password="vanni")) == OwnerID(owner_id="1")
-    assert mock_main_mailbox.get_notifications(OwnerID(owner_id=result)) == []
     assert result == '1'
 
 
@@ -36,7 +35,6 @@ def test_register_allvalid_repeated(
         usecases.register(username="gio", password="vanni")
 
     assert mock_owner_repo.get_user_id(user_data=UserData(username="gio", password="vanni")) is not None
-    assert mock_main_mailbox.get_notifications(OwnerID(owner_id=result)) == []
 
 
 def test_login_valid_existing_data(
@@ -68,9 +66,11 @@ def test_get_notification(
     usecases = OwnerUseCases(ownermailbox=mock_owner_repo, notifmailbox=mock_main_mailbox, id_generator=mock_id_generator)
     usecases.register(username="gio", password="vanni")
     id = usecases.login(username="gio", password="vanni")
+    with pytest.raises(ResourceNotFoundError):
+        notif = usecases.get_notifications(id)
+    mock_main_mailbox.save(target_id=OwnerID(owner_id=id),payload=NotificationPayload(conteudo="vasco",lida=0,timestamp=datetime.now()))
     notif = usecases.get_notifications(id)
-    assert notif == []
-
+    assert notif != None 
 
 def test_get_notification_invalidid(
     mock_main_mailbox: AbstractMailboxRepository,

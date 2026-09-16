@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notificar Proprietário - Projeto QR</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #eef2ff;
+            --bg-body: #0f172a;
+            --surface: #1e293b;
+            --surface-card: #243248;
+            --surface-input: #0f172a;
+            --border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-amber: #f59e0b;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --shadow: 0 12px 30px -6px rgba(0, 0, 0, 0.5), 0 6px 12px -4px rgba(0, 0, 0, 0.3);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 26px 22px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar-badge {
+            width: 68px;
+            height: 68px;
+            background: linear-gradient(135deg, var(--primary), #818cf8);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            margin: 0 auto 14px auto;
+            box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3);
+        }
+
+        h1 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        p.subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 18px;
+            line-height: 1.4;
+        }
+
+        /* Field Wrappers */
+        .field-box {
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            margin-bottom: 16px;
+            text-align: left;
+            transition: var(--transition);
+        }
+
+        .field-box:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+        }
+
+        .field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .field-input-box {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .field-prefix {
+            color: #818cf8;
+            font-weight: 700;
+            font-size: 1.05rem;
+            user-select: none;
+        }
+
+        .field-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #c7d2fe;
+            font-size: 1rem;
+            font-weight: 700;
+            outline: none;
+            width: 100%;
+        }
+
+        .field-input::placeholder {
+            color: #64748b;
+            font-weight: 400;
+        }
+
+        /* Preset Quick Buttons */
+        .presets-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: left;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .presets-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .preset-btn {
+            background-color: var(--surface-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 9px 10px;
+            border-radius: var(--radius-md);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-align: left;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--primary);
+            background-color: rgba(79, 70, 229, 0.1);
+        }
+
+        .preset-btn.active {
+            border-color: var(--primary);
+            background-color: rgba(79, 70, 229, 0.2);
+            color: #c7d2fe;
+        }
+
+        /* Custom Input */
+        .form-group {
+            margin-bottom: 18px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        .input-control {
+            width: 100%;
+            padding: 11px 13px;
+            background-color: var(--surface-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            font-size: 0.92rem;
+            transition: var(--transition);
+        }
+
+        .input-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+        }
+
+        /* Big Action Button */
+        .btn-send {
+            width: 100%;
+            padding: 13px 18px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+            color: #ffffff;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-send:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(79, 70, 229, 0.45);
+        }
+
+        .btn-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Success & Error States */
+        .state-view {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .state-icon {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 38px;
+            margin: 0 auto 16px auto;
+        }
+
+        .state-icon.success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 2px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .state-icon.error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 2px solid var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .state-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .state-desc {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 22px;
+            line-height: 1.4;
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 11px 16px;
+            background-color: var(--surface-card);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--border);
+        }
+
+        /* API Link Configuration Box */
+        .api-settings-box {
+            margin-top: 14px;
+            background: var(--surface);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            text-align: left;
+        }
+
+        .api-settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .quick-link-btn {
+            background: transparent;
+            border: none;
+            color: #818cf8;
+            font-size: 0.72rem;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 0;
+        }
+
+        .quick-link-btn:hover {
+            color: #a5b4fc;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- Main Interactive Form Card -->
+        <div class="card" id="formCard">
+            <div class="avatar-badge">🔔</div>
+            <h1>Campainha Virtual</h1>
+            <p class="subtitle">Envie uma notificação instantânea para o destinatário.</p>
+
+            <!-- 1. Editable Nickname Section -->
+            <div class="field-box">
+                <div class="field-header">
+                    <span>Destinatário (Proprietário)</span>
+                    <span style="color: #818cf8; font-weight: normal;">✏️ Editável</span>
+                </div>
+                <div class="field-input-box">
+                    <span class="field-prefix">@</span>
+                    <input type="text" id="targetNicknameInput" class="field-input" placeholder="digite_o_nickname" oninput="handleNicknameChange(this.value)" autocomplete="off" />
+                </div>
+            </div>
+
+            <!-- 2. Editable API Backend Link Section -->
+            <div class="field-box">
+                <div class="field-header">
+                    <span>Servidor API Backend</span>
+                    <button type="button" class="quick-link-btn" onclick="useCurrentOriginAsApi()">⚡ Usar link atual</button>
+                </div>
+                <div class="field-input-box">
+                    <span class="field-prefix" style="font-size: 0.85rem;">🌐</span>
+                    <input type="text" id="targetApiInput" class="field-input" style="font-size: 0.85rem; font-family: monospace; font-weight: 500;" placeholder="https://exemplo.ngrok-free.app ou http://127.0.0.1:8000" oninput="handleApiChange(this.value)" autocomplete="off" />
+                </div>
+            </div>
+
+            <!-- Quick Presets -->
+            <div class="presets-label">Mensagens Rápidas</div>
+            <div class="presets-grid">
+                <button type="button" class="preset-btn active" onclick="selectPreset('🔔 Ding-Dong! Cheguei na porta / portaria.', this)">
+                    <span>🔔</span> Cheguei
+                </button>
+                <button type="button" class="preset-btn" onclick="selectPreset('📦 Encomenda / Entrega disponível para você!', this)">
+                    <span>📦</span> Entrega
+                </button>
+                <button type="button" class="preset-btn" onclick="selectPreset('🚗 Estou aguardando no estacionamento / portão.', this)">
+                    <span>🚗</span> Aguardando
+                </button>
+                <button type="button" class="preset-btn" onclick="selectPreset('✉️ Nova correspondência na caixa de correio.', this)">
+                    <span>✉️</span> Carta / Correio
+                </button>
+            </div>
+
+            <!-- Custom Message Field -->
+            <div class="form-group">
+                <label for="payloadInput">Recado Personalizado (Opcional)</label>
+                <input type="text" id="payloadInput" class="input-control" value="🔔 Ding-Dong! Cheguei na porta / portaria." placeholder="Escreva um recado personalizado..." />
+            </div>
+
+            <button type="button" class="btn-send" id="btnSend" onclick="sendNotification()">
+                <span>🔔 Notificar Agora</span>
+            </button>
+        </div>
+
+        <!-- Success View Card -->
+        <div class="card state-view" id="successCard">
+            <div class="state-icon success">✓</div>
+            <div class="state-title" style="color: var(--accent-green);">Notificação Enviada!</div>
+            <div class="state-desc" id="successDesc">
+                O proprietário foi notificado com sucesso na caixa postal.
+            </div>
+            <button type="button" class="btn-secondary" onclick="resetForm()">Enviar Outro Recado</button>
+        </div>
+
+        <!-- Error View Card -->
+        <div class="card state-view" id="errorCard">
+            <div class="state-icon error">✕</div>
+            <div class="state-title" style="color: var(--accent-red);">Falha no Envio</div>
+            <div class="state-desc" id="errorDesc">
+                Não foi possível entregar a notificação.
+            </div>
+            <button type="button" class="btn-secondary" onclick="resetForm()">Tentar Novamente</button>
+        </div>
+
+    </div>
+
+    <script>
+        // State
+        let targetNickname = '';
+        let apiBaseUrl = 'http://127.0.0.1:8000';
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            
+            // 1. Resolve initial target nickname from URL
+            targetNickname = (params.get('nickname') || params.get('user') || params.get('to') || '').trim();
+            const nicknameInput = document.getElementById('targetNicknameInput');
+            nicknameInput.value = targetNickname;
+            updateSendButtonState();
+
+            // 2. Resolve API Backend Base URL
+            if (params.get('api')) {
+                // If passed explicitly via ?api=https://...
+                apiBaseUrl = params.get('api').replace(/\/+$/, '');
+            } else if (window.location.origin && window.location.origin !== 'null' && window.location.protocol.startsWith('http')) {
+                // If running on Live Server port 5500/3000, target backend on port 8000
+                if (window.location.port === '5500' || window.location.port === '3000') {
+                    apiBaseUrl = `${window.location.protocol}//${window.location.hostname}:8000`;
+                } else {
+                    // When served through Ngrok or directly by FastAPI, adopt the exact origin
+                    apiBaseUrl = window.location.origin;
+                }
+            } else {
+                apiBaseUrl = 'http://127.0.0.1:8000';
+            }
+
+            const apiInput = document.getElementById('targetApiInput');
+            apiInput.value = apiBaseUrl;
+
+            // 3. Optional zero-overhead auto-dispatch if ?auto=true
+            if (params.get('auto') === 'true' && targetNickname) {
+                document.getElementById('btnSend').innerText = '⏳ Enviando automaticamente...';
+                setTimeout(() => sendNotification(), 800);
+            }
+        });
+
+        // Handle live typing in the nickname input
+        function handleNicknameChange(newVal) {
+            targetNickname = newVal.trim();
+            updateSendButtonState();
+            syncUrlParams();
+        }
+
+        // Handle live typing in the API backend input
+        function handleApiChange(newVal) {
+            apiBaseUrl = newVal.trim().replace(/\/+$/, '');
+            syncUrlParams();
+        }
+
+        function useCurrentOriginAsApi() {
+            if (window.location.origin && window.location.origin !== 'null' && window.location.protocol.startsWith('http')) {
+                let origin = window.location.origin;
+                if (window.location.port === '5500' || window.location.port === '3000') {
+                    origin = `${window.location.protocol}//${window.location.hostname}:8000`;
+                }
+                apiBaseUrl = origin;
+                document.getElementById('targetApiInput').value = apiBaseUrl;
+                syncUrlParams();
+            }
+        }
+
+        function syncUrlParams() {
+            const url = new URL(window.location);
+            if (targetNickname) {
+                url.searchParams.set('nickname', targetNickname);
+            } else {
+                url.searchParams.delete('nickname');
+            }
+
+            if (apiBaseUrl && apiBaseUrl !== window.location.origin) {
+                url.searchParams.set('api', apiBaseUrl);
+            } else {
+                url.searchParams.delete('api');
+            }
+            window.history.replaceState({}, '', url);
+        }
+
+        function updateSendButtonState() {
+            const btnSend = document.getElementById('btnSend');
+            if (targetNickname) {
+                btnSend.disabled = false;
+                btnSend.innerHTML = `<span>🔔 Notificar @${escapeHtml(targetNickname)}</span>`;
+            } else {
+                btnSend.disabled = true;
+                btnSend.innerHTML = '<span>⚠️ Digite um Nickname</span>';
+            }
+        }
+
+        function selectPreset(text, btnElement) {
+            document.getElementById('payloadInput').value = text;
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+            if (btnElement) btnElement.classList.add('active');
+        }
+
+        async function sendNotification() {
+            if (!targetNickname) {
+                alert('Digite o nickname do proprietário que deseja notificar.');
+                document.getElementById('targetNicknameInput').focus();
+                return;
+            }
+
+            const currentApi = (document.getElementById('targetApiInput').value.trim() || apiBaseUrl).replace(/\/+$/, '');
+            if (!currentApi) {
+                alert('Informe o endereço do servidor API Backend.');
+                document.getElementById('targetApiInput').focus();
+                return;
+            }
+
+            const payloadText = document.getElementById('payloadInput').value.trim();
+            const btnSend = document.getElementById('btnSend');
+            btnSend.disabled = true;
+            btnSend.innerHTML = '<span>⏳ Enviando...</span>';
+
+            const url = `${currentApi}/notifications/notificate?nickname=${encodeURIComponent(targetNickname)}`;
+            const bodyData = payloadText ? { payload: payloadText } : null;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: bodyData ? JSON.stringify(bodyData) : null
+                });
+
+                if (response.status === 204 || response.status === 200) {
+                    showSuccess();
+                } else if (response.status === 404) {
+                    showError(`O destinatário "@${targetNickname}" não foi encontrado no sistema.`);
+                } else if (response.status === 400) {
+                    showError('Mensagem inválida.');
+                } else {
+                    const err = await response.text().catch(() => '');
+                    showError(`Erro ao entregar (${response.status}): ${err || 'Falha no servidor'}`);
+                }
+            } catch (err) {
+                showError(`Não foi possível conectar ao servidor (${currentApi}). Verifique se o endereço da API está correto e o backend ativo.`);
+            } finally {
+                btnSend.disabled = false;
+                updateSendButtonState();
+            }
+        }
+
+        function showSuccess() {
+            document.getElementById('formCard').style.display = 'none';
+            document.getElementById('errorCard').style.display = 'none';
+            document.getElementById('successCard').style.display = 'block';
+            document.getElementById('successDesc').innerHTML = `A notificação foi entregue com sucesso para <strong>@${escapeHtml(targetNickname)}</strong> às ${new Date().toLocaleTimeString('pt-BR')}.`;
+        }
+
+        function showError(msg) {
+            document.getElementById('formCard').style.display = 'none';
+            document.getElementById('successCard').style.display = 'none';
+            document.getElementById('errorCard').style.display = 'block';
+            document.getElementById('errorDesc').innerText = msg;
+        }
+
+        function resetForm() {
+            document.getElementById('successCard').style.display = 'none';
+            document.getElementById('errorCard').style.display = 'none';
+            document.getElementById('formCard').style.display = 'block';
+            updateSendButtonState();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto QR - Cliente Web Mailbox</title>
+    <!-- QRCode library for client-side generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #eef2ff;
+            --bg-body: #0f172a;
+            --surface: #1e293b;
+            --surface-card: #243248;
+            --surface-input: #0f172a;
+            --border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-amber: #f59e0b;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 16px 40px 16px;
+        }
+
+        /* Protocol Alert Banner (shown on file://) */
+        #protocolWarning {
+            display: none;
+            width: 100%;
+            max-width: 960px;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid var(--accent-amber);
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            color: #fbbf24;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        /* Top Config Header */
+        .top-bar {
+            width: 100%;
+            max-width: 960px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 12px 20px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+        }
+
+        .api-config {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+
+        .api-config input {
+            background: var(--surface-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            width: 220px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+        }
+
+        /* Main Container */
+        .main-container {
+            width: 100%;
+            max-width: 960px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        @media (min-width: 840px) {
+            .main-container.dashboard-active {
+                grid-template-columns: 340px 1fr;
+            }
+        }
+
+        /* Card Styles */
+        .card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-main);
+        }
+
+        .card-title span.badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(79, 70, 229, 0.2);
+            color: #818cf8;
+            font-weight: 500;
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .input-control {
+            width: 100%;
+            padding: 10px 14px;
+            background-color: var(--surface-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        .input-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: var(--surface-card);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--border);
+        }
+
+        .btn-danger {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-danger:hover {
+            background-color: var(--accent-red);
+            color: #fff;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Tabs for Login / Register */
+        .tabs-header {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 14px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-muted);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Auth box container */
+        .auth-container {
+            max-width: 440px;
+            margin: 40px auto;
+            width: 100%;
+        }
+
+        /* Dashboard Styles */
+        .dashboard-container {
+            display: none;
+            width: 100%;
+        }
+
+        .nickname-badge-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            padding: 14px;
+            border-radius: var(--radius-md);
+            margin-bottom: 16px;
+        }
+
+        .nickname-badge-card .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .nickname-badge-card .value {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #a5b4fc;
+            word-break: break-all;
+            margin-top: 4px;
+        }
+
+        /* QR Code Card Styles */
+        .qr-card {
+            margin-top: 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+        }
+
+        .qr-box-wrapper {
+            background: #ffffff;
+            border-radius: var(--radius-md);
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            min-height: 200px;
+        }
+
+        .qr-box-wrapper img, .qr-box-wrapper canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Notifications List */
+        .controls-bar {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .controls-bar .form-group {
+            margin-bottom: 0;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .controls-bar .btn {
+            width: auto;
+            align-self: flex-end;
+        }
+
+        .notifications-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 520px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .notifications-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .notifications-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        .notif-item {
+            background-color: var(--surface-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .notif-item:hover {
+            border-color: #475569;
+            transform: translateY(-1px);
+        }
+
+        .notif-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .notif-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .notif-status.unread {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--accent-amber);
+        }
+
+        .notif-status.read {
+            background-color: rgba(148, 163, 184, 0.2);
+            color: var(--text-muted);
+        }
+
+        .notif-content {
+            font-size: 0.95rem;
+            color: var(--text-main);
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 16px;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            stroke: var(--text-muted);
+            margin-bottom: 12px;
+            opacity: 0.6;
+        }
+
+        /* Public Notification Sender Card */
+        .public-sender-card {
+            margin-top: 24px;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(36, 50, 72, 0.95));
+            border: 1px dashed var(--primary);
+        }
+
+        /* Toast notifications */
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 12px 18px;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            animation: slideIn 0.3s ease;
+            max-width: 360px;
+        }
+
+        .toast.success { background-color: var(--accent-green); }
+        .toast.error { background-color: var(--accent-red); }
+        .toast.info { background-color: var(--primary); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Auto-refresh toggle */
+        .toggle-wrapper {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-wrapper input {
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Protocol Warning Banner -->
+    <div id="protocolWarning">
+        <strong>⚠️ Atenção: Página aberta via arquivo local (protocolo file://)</strong>
+        Navegadores modernos (Chrome, Firefox, Edge) <strong>rejeitam o salvamento de cookies (session_id)</strong> em requisições feitas a partir de <code>file:///...</code> por políticas de segurança.<br>
+        Para que os cookies funcionem, sirva esta página via servidor local HTTP (ex: <em>VS Code Live Server</em>, ou rodando <code>python -m http.server 5500</code> no terminal dentro da pasta frontend).
+    </div>
+
+    <!-- Top API Configuration Bar -->
+    <header class="top-bar">
+        <div class="api-config">
+            <label for="apiUrl">API Backend:</label>
+            <input type="text" id="apiUrl" value="http://127.0.0.1:8000" placeholder="http://127.0.0.1:8000" />
+            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; width: auto;" id="btnSwitchHost" onclick="switchApiHost()" title="Alternar entre 127.0.0.1 e localhost para corresponder ao seu Live Server">⇋ Alternar Host</button>
+            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; width: auto;" id="btnTestConn">Testar Conexão</button>
+        </div>
+        <div class="status-badge" id="backendStatus">
+            <span class="status-dot"></span>
+            <span id="backendStatusText">Pronto</span>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="main-container" id="mainLayout">
+
+        <!-- AUTH VIEW (Login / Register) -->
+        <section class="card auth-container" id="authSection">
+            <div class="tabs-header">
+                <button class="tab-btn active" id="tabLoginBtn" onclick="switchAuthTab('login')">Entrar (Login)</button>
+                <button class="tab-btn" id="tabRegisterBtn" onclick="switchAuthTab('register')">Registrar Conta</button>
+            </div>
+
+            <form id="authForm" onsubmit="handleAuthSubmit(event)">
+                <div class="form-group">
+                    <label for="authUsername">Nome de Usuário (Username)</label>
+                    <input type="text" id="authUsername" class="input-control" required placeholder="Digite seu usuário" autocomplete="username" />
+                </div>
+
+                <div class="form-group">
+                    <label for="authPassword">Senha (Password)</label>
+                    <input type="password" id="authPassword" class="input-control" required placeholder="Digite sua senha" autocomplete="current-password" />
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="authSubmitBtn">Entrar no Sistema</button>
+            </form>
+        </section>
+
+        <!-- DASHBOARD VIEW (Authenticated) -->
+        <div class="dashboard-container" id="dashboardSection" style="display: contents;">
+            <!-- Left Column: Identity & QR Code -->
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                
+                <!-- Profile / Identity Card -->
+                <section class="card" id="profileCard" style="display: none;">
+                    <div class="card-title">
+                        Identidade
+                        <span class="badge">Autenticado</span>
+                    </div>
+
+                    <div class="nickname-badge-card">
+                        <div class="label">Nickname Ativo:</div>
+                        <div class="value" id="currentNicknameDisplay">-</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newNicknameInput" id="nicknameInputLabel">Alterar Nickname</label>
+                        <input type="text" id="newNicknameInput" class="input-control" placeholder="Novo apelido desejado" />
+                    </div>
+
+                    <div class="btn-row" style="margin-bottom: 16px;">
+                        <button class="btn btn-primary" id="btnSaveNickname" onclick="handleSaveNickname()">Atualizar Nickname</button>
+                        <button class="btn btn-secondary" onclick="handleRetrieveNickname()" title="Recarregar apelido do servidor">⟳</button>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;" />
+
+                    <button class="btn btn-danger" onclick="handleLogout()">Encerrar Sessão (Logout)</button>
+                </section>
+
+                <!-- Dedicated QR Code Card for the Authenticated User -->
+                <section class="card qr-card" id="qrcodeCard" style="display: none;">
+                    <div class="card-title">
+                        <span>Seu QR Code</span>
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-green);">Notificação</span>
+                    </div>
+
+                    <div id="ownerQrCodeActiveContainer">
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label style="font-size: 0.75rem;">Destino do QR Code:</label>
+                            <select id="qrTargetType" class="input-control" style="font-size: 0.85rem; padding: 6px 10px;" onchange="renderOwnerQRCode(authenticatedNickname)">
+                                <option value="doorbell" selected>📱 Página da Campainha (notify.html - Recomendado)</option>
+                                <option value="api">⚡ Endpoint Direto da API (/notifications/notificate)</option>
+                            </select>
+                        </div>
+
+                        <!-- QR Code Render Container -->
+                        <div class="qr-box-wrapper">
+                            <div id="ownerQrCodeCanvas"></div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label style="font-size: 0.75rem;">URL Codificada no QR:</label>
+                            <div style="display: flex; gap: 6px;">
+                                <input type="text" id="encodedRouteUrl" class="input-control" readonly style="font-size: 0.75rem; font-family: monospace; padding: 6px 8px;" />
+                                <button class="btn btn-secondary" style="width: auto; padding: 6px 10px;" onclick="copyRouteUrl()" title="Copiar URL">📋</button>
+                            </div>
+                        </div>
+
+                        <div class="btn-row">
+                            <button class="btn btn-primary" style="font-size: 0.82rem;" onclick="downloadOwnerQRCode()">💾 Baixar PNG</button>
+                            <button class="btn btn-secondary" style="font-size: 0.82rem;" onclick="triggerTestPing()" title="Disparar notificação de teste para o seu próprio QR code">🔔 Testar</button>
+                        </div>
+                    </div>
+
+                    <div id="ownerQrCodeEmptyContainer" style="display: none; text-align: center; padding: 20px 8px;">
+                        <p style="font-size: 0.85rem; color: var(--accent-amber); margin-bottom: 8px;">
+                            ⚠️ Nenhum nickname associado à sua conta ainda.
+                        </p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">
+                            Cadastre um apelido acima para gerar seu QR Code personalizado.
+                        </p>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- Right Column: Mailbox / Notifications List -->
+            <section class="card" id="mailboxCard" style="display: none;">
+                <div class="card-title">
+                    <span>Caixa Postal (Notificações)</span>
+                    <label class="toggle-wrapper">
+                        <input type="checkbox" id="autoRefreshToggle" onchange="toggleAutoRefresh(this.checked)" />
+                        Auto-atualizar (5s)
+                    </label>
+                </div>
+
+                <!-- Controls Bar: Pagination / Fetch -->
+                <div class="controls-bar">
+                    <div class="form-group">
+                        <label for="notifOffset">Offset (Pular):</label>
+                        <input type="number" id="notifOffset" class="input-control" value="0" min="0" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notifAmount">Quantidade:</label>
+                        <input type="number" id="notifAmount" class="input-control" value="10" min="1" />
+                    </div>
+
+                    <button class="btn btn-primary" onclick="handleFetchNotifications()">Buscar</button>
+                </div>
+
+                <!-- Diagnostic status indicator for notifications -->
+                <div id="mailboxStatusNotice" style="display: none; margin-bottom: 12px; padding: 10px 14px; border-radius: var(--radius-md); font-size: 0.82rem; line-height: 1.4;"></div>
+
+                <!-- List of notifications -->
+                <div class="notifications-list" id="notificationsList">
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                        </svg>
+                        <p>Nenhuma notificação carregada ainda.<br>Clique em <strong>Buscar</strong> para consultar sua caixa postal.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <!-- Public Notification Sender (QR Code Simulation & Dynamic QR Tool) -->
+    <div style="width: 100%; max-width: 960px; margin-top: 24px;">
+        <section class="card public-sender-card">
+            <div class="card-title">
+                <span>Simulador de Disparo QR (Envio Público de Notificação)</span>
+                <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-green);">POST /notifications/notificate</span>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+                Permite disparar notificações para qualquer <strong>Nickname</strong> cadastrado na API (simulando a leitura de um QR Code por um visitante ou sensor).
+            </p>
+
+            <form onsubmit="handleSendPublicNotification(event)">
+                <div style="display: grid; grid-template-columns: 1.2fr 2fr auto auto; gap: 12px; align-items: flex-end;" class="sender-grid">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="targetNickname">Nickname de Destino:</label>
+                        <input type="text" id="targetNickname" class="input-control" placeholder="ex: joao_silva" required oninput="updatePublicQrPreview()" />
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="notifPayload">Mensagem / Conteúdo (Payload):</label>
+                        <input type="text" id="notifPayload" class="input-control" placeholder="ex: Nova encomenda na portaria!" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: auto; padding: 10px 20px;">Enviar</button>
+                    <button type="button" class="btn btn-secondary" style="width: auto; padding: 10px 14px;" onclick="togglePublicQrModal()" title="Visualizar QR Code deste nickname">📱 QR</button>
+                </div>
+            </form>
+
+            <!-- Collapsible Public QR Preview -->
+            <div id="publicQrPreviewContainer" style="display: none; margin-top: 16px; padding: 16px; background: var(--surface-card); border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center;">
+                <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 10px; color: var(--text-main);">
+                    QR Code para: <span id="publicQrTargetLabel" style="color: #818cf8;">-</span>
+                </div>
+                <div class="qr-box-wrapper" style="display: inline-flex; margin-bottom: 12px;">
+                    <div id="publicQrCodeCanvas"></div>
+                </div>
+                <div>
+                    <button class="btn btn-secondary" style="width: auto; padding: 6px 14px; font-size: 0.8rem;" onclick="downloadPublicQRCode()">💾 Baixar Imagem QR</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast-container"></div>
+
+    <!-- JavaScript Controller and API Client -->
+    <script>
+        // State Management
+        let currentAuthMode = 'login'; // 'login' | 'register'
+        let authenticatedNickname = null;
+        let autoRefreshIntervalId = null;
+
+        // Check protocol and host on load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.location.protocol === 'file:') {
+                document.getElementById('protocolWarning').style.display = 'block';
+            }
+
+            // Automatically resolve API URL to the origin that served this page (Ngrok, custom domain, or local server)
+            const apiInput = document.getElementById('apiUrl');
+            if (window.location.origin && window.location.origin !== 'null' && window.location.protocol.startsWith('http')) {
+                // If running via Live Server on port 5500 or 3000, target backend on port 8000
+                if (window.location.port === '5500' || window.location.port === '3000') {
+                    apiInput.value = `${window.location.protocol}//${window.location.hostname}:8000`;
+                } else {
+                    // When served through Ngrok or directly by FastAPI, use the exact origin
+                    apiInput.value = window.location.origin;
+                }
+            } else {
+                apiInput.value = 'http://127.0.0.1:8000';
+            }
+        });
+
+        // Helpers
+        function getBaseUrl() {
+            const input = document.getElementById('apiUrl').value.trim();
+            return input.replace(/\/+$/, '');
+        }
+
+        function switchApiHost() {
+            const apiInput = document.getElementById('apiUrl');
+            const current = apiInput.value.trim();
+            if (current.includes('127.0.0.1')) {
+                apiInput.value = current.replace('127.0.0.1', 'localhost');
+                showToast('API alterada para http://localhost:8000', 'info');
+            } else if (current.includes('localhost')) {
+                apiInput.value = current.replace('localhost', '127.0.0.1');
+                showToast('API alterada para http://127.0.0.1:8000', 'info');
+            }
+        }
+
+        function getNotificationRouteUrl(nickname, isDoorbellPage = true) {
+            const baseUrl = getBaseUrl();
+            if (isDoorbellPage) {
+                // If the app is served via FastAPI, the route is /notify
+                const currentOrigin = (window.location.origin && window.location.origin !== 'null' && window.location.protocol.startsWith('http'))
+                    ? window.location.origin
+                    : baseUrl;
+                return `${currentOrigin}/notify?nickname=${encodeURIComponent(nickname)}`;
+            } else {
+                return `${baseUrl}/notifications/notificate?nickname=${encodeURIComponent(nickname)}`;
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function createBasicAuthHeader(username, password) {
+            return 'Basic ' + btoa(`${username}:${password}`);
+        }
+
+        // QR Code Generator Function
+        function generateQRCode(elementId, text, size = 180) {
+            const container = document.getElementById(elementId);
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (typeof QRCode !== 'undefined') {
+                new QRCode(container, {
+                    text: text,
+                    width: size,
+                    height: size,
+                    colorDark: "#0f172a",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            } else {
+                // Fallback to QR API image if qrcodejs is loading or unavailable
+                const img = document.createElement('img');
+                img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}`;
+                img.alt = `QR Code para ${text}`;
+                img.style.borderRadius = '6px';
+                img.style.width = `${size}px`;
+                img.style.height = `${size}px`;
+                container.appendChild(img);
+            }
+        }
+
+        // Download QR Code Canvas / Image
+        function downloadQRCode(elementId, filename = 'qrcode_notificacao.png') {
+            const container = document.getElementById(elementId);
+            if (!container) return;
+            const canvas = container.querySelector('canvas');
+            if (canvas) {
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('Download do QR Code iniciado!', 'success');
+                return;
+            }
+            const img = container.querySelector('img');
+            if (img && img.src) {
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = img.src;
+                link.target = '_blank';
+                link.click();
+                showToast('Download do QR Code iniciado!', 'success');
+            }
+        }
+
+        // Render Authenticated Owner QR Code
+        function renderOwnerQRCode(nickname) {
+            const activeBox = document.getElementById('ownerQrCodeActiveContainer');
+            const emptyBox = document.getElementById('ownerQrCodeEmptyContainer');
+            document.getElementById('qrcodeCard').style.display = 'block';
+
+            if (nickname && nickname.trim()) {
+                if (activeBox) activeBox.style.display = 'block';
+                if (emptyBox) emptyBox.style.display = 'none';
+
+                const qrType = document.getElementById('qrTargetType')?.value || 'doorbell';
+                const isDoorbell = qrType === 'doorbell';
+                const url = getNotificationRouteUrl(nickname, isDoorbell);
+                document.getElementById('encodedRouteUrl').value = url;
+                generateQRCode('ownerQrCodeCanvas', url, 180);
+            } else {
+                if (activeBox) activeBox.style.display = 'none';
+                if (emptyBox) emptyBox.style.display = 'block';
+                document.getElementById('encodedRouteUrl').value = '';
+            }
+        }
+
+        function downloadOwnerQRCode() {
+            const nickname = authenticatedNickname || 'meu_usuario';
+            downloadQRCode('ownerQrCodeCanvas', `qrcode_notificacao_${nickname}.png`);
+        }
+
+        function copyRouteUrl() {
+            const input = document.getElementById('encodedRouteUrl');
+            if (!input || !input.value) return;
+            navigator.clipboard.writeText(input.value).then(() => {
+                showToast('URL da rota copiada para a área de transferência!', 'success');
+            }).catch(() => {
+                input.select();
+                document.execCommand('copy');
+                showToast('URL copiada!', 'success');
+            });
+        }
+
+        async function triggerTestPing() {
+            if (!authenticatedNickname) {
+                showToast('Cadastre um nickname antes de realizar o teste.', 'error');
+                return;
+            }
+            const baseUrl = getBaseUrl();
+            try {
+                const response = await fetch(`${baseUrl}/notifications/notificate?nickname=${encodeURIComponent(authenticatedNickname)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ payload: `Disparo de teste via QR Code às ${new Date().toLocaleTimeString('pt-BR')}` })
+                });
+                if (response.status === 204) {
+                    showToast('Disparo de teste efetuado com sucesso!', 'success');
+                    setTimeout(() => handleFetchNotifications(true), 300);
+                } else {
+                    const err = await response.text();
+                    showToast(`Erro no disparo: ${err}`, 'error');
+                }
+            } catch (err) {
+                showToast(`Erro de conexão: ${err.message}`, 'error');
+            }
+        }
+
+        // Public QR Preview toggle & render
+        function togglePublicQrModal() {
+            const container = document.getElementById('publicQrPreviewContainer');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                updatePublicQrPreview();
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function updatePublicQrPreview() {
+            const nickname = document.getElementById('targetNickname').value.trim();
+            const container = document.getElementById('publicQrPreviewContainer');
+            if (!nickname || container.style.display === 'none') return;
+
+            document.getElementById('publicQrTargetLabel').innerText = nickname;
+            const url = getNotificationRouteUrl(nickname);
+            generateQRCode('publicQrCodeCanvas', url, 160);
+        }
+
+        function downloadPublicQRCode() {
+            const nickname = document.getElementById('targetNickname').value.trim() || 'target';
+            downloadQRCode('publicQrCodeCanvas', `qrcode_${nickname}.png`);
+        }
+
+        // Test API Connection
+        document.getElementById('btnTestConn').addEventListener('click', async () => {
+            const baseUrl = getBaseUrl();
+            const statusBadge = document.getElementById('backendStatus');
+            const statusText = document.getElementById('backendStatusText');
+
+            statusText.innerText = 'Verificando...';
+            try {
+                const res = await fetch(`${baseUrl}/openapi.json`, { method: 'GET' });
+                if (res.ok) {
+                    statusText.innerText = 'Online (200 OK)';
+                    statusBadge.style.color = 'var(--accent-green)';
+                    statusBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+                    showToast('Servidor backend acessível com sucesso!', 'success');
+                } else {
+                    statusText.innerText = `Erro HTTP ${res.status}`;
+                    statusBadge.style.color = 'var(--accent-amber)';
+                    statusBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+                    showToast(`Servidor respondeu com status ${res.status}`, 'info');
+                }
+            } catch (err) {
+                statusText.innerText = 'Offline / Erro de Rede';
+                statusBadge.style.color = 'var(--accent-red)';
+                statusBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+                showToast(`Falha de conexão: ${err.message}. Verifique se o backend está rodando.`, 'error');
+            }
+        });
+
+        // Switch Auth Tab
+        function switchAuthTab(mode) {
+            currentAuthMode = mode;
+            const tabLogin = document.getElementById('tabLoginBtn');
+            const tabRegister = document.getElementById('tabRegisterBtn');
+            const submitBtn = document.getElementById('authSubmitBtn');
+
+            if (mode === 'login') {
+                tabLogin.classList.add('active');
+                tabRegister.classList.remove('active');
+                submitBtn.innerText = 'Entrar no Sistema';
+            } else {
+                tabRegister.classList.add('active');
+                tabLogin.classList.remove('active');
+                submitBtn.innerText = 'Criar Nova Conta';
+            }
+        }
+
+        // Handle Auth Submission
+        async function handleAuthSubmit(event) {
+            event.preventDefault();
+            const baseUrl = getBaseUrl();
+            const username = document.getElementById('authUsername').value.trim();
+            const password = document.getElementById('authPassword').value;
+
+            if (!username || !password) {
+                showToast('Preencha o usuário e a senha.', 'error');
+                return;
+            }
+
+            const authHeader = createBasicAuthHeader(username, password);
+
+            if (currentAuthMode === 'register') {
+                try {
+                    const response = await fetch(`${baseUrl}/owner/register`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': authHeader
+                        },
+                        credentials: 'include'
+                    });
+
+                    if (response.status === 204 || response.status === 201 || response.status === 200) {
+                        showToast('Usuário registrado com sucesso! Faça login para continuar.', 'success');
+                        switchAuthTab('login');
+                        document.getElementById('authPassword').value = '';
+                    } else if (response.status === 409) {
+                        showToast('Erro no registro: Este nome de usuário já está em uso.', 'error');
+                    } else {
+                        const err = await response.text().catch(() => '');
+                        showToast(`Erro no registro (${response.status}): ${err}`, 'error');
+                    }
+                } catch (err) {
+                    showToast(`Erro de conexão: ${err.message}`, 'error');
+                }
+            } else {
+                // Login
+                try {
+                    const response = await fetch(`${baseUrl}/owner/login`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': authHeader
+                        },
+                        credentials: 'include'
+                    });
+
+                    if (response.status === 200 || response.status === 204) {
+                        let nickname = null;
+                        if (response.status === 200) {
+                            try {
+                                nickname = await response.json();
+                            } catch (_) {
+                                nickname = null;
+                            }
+                        }
+                        authenticatedNickname = nickname;
+                        if (nickname) {
+                            showToast(`Login realizado! Bem-vindo, ${nickname}!`, 'success');
+                        } else {
+                            showToast('Login realizado com sucesso!', 'success');
+                        }
+                        renderAuthenticatedUI(nickname);
+                        handleFetchNotifications(true);
+                    } else if (response.status === 401) {
+                        showToast('Falha na autenticação: Usuário ou senha incorretos.', 'error');
+                    } else {
+                        const err = await response.text().catch(() => '');
+                        showToast(`Erro no login (${response.status}): ${err}`, 'error');
+                    }
+                } catch (err) {
+                    showToast(`Erro de conexão: ${err.message}`, 'error');
+                }
+            }
+        }
+
+        // Render Authenticated Dashboard
+        function renderAuthenticatedUI(nickname) {
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('profileCard').style.display = 'block';
+            document.getElementById('qrcodeCard').style.display = 'block';
+            document.getElementById('mailboxCard').style.display = 'block';
+            document.getElementById('mainLayout').classList.add('dashboard-active');
+
+            updateNicknameUI(nickname);
+        }
+
+        function updateNicknameUI(nickname) {
+            authenticatedNickname = nickname;
+            const displayEl = document.getElementById('currentNicknameDisplay');
+            const labelEl = document.getElementById('nicknameInputLabel');
+            const btnEl = document.getElementById('btnSaveNickname');
+            const targetNickInput = document.getElementById('targetNickname');
+
+            if (nickname && nickname.trim()) {
+                displayEl.innerText = nickname;
+                if (labelEl) labelEl.innerText = 'Alterar Nickname';
+                if (btnEl) btnEl.innerText = 'Atualizar Nickname';
+                if (targetNickInput) targetNickInput.value = nickname;
+            } else {
+                displayEl.innerHTML = '<span style="color: var(--accent-amber); font-style: italic;">Não cadastrado</span>';
+                if (labelEl) labelEl.innerText = 'Cadastrar Nickname';
+                if (btnEl) btnEl.innerText = 'Cadastrar Nickname';
+            }
+
+            renderOwnerQRCode(nickname);
+        }
+
+        // Handle Logout
+        async function handleLogout() {
+            const baseUrl = getBaseUrl();
+            try {
+                await fetch(`${baseUrl}/owner/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (e) {
+                // Ignore network errors on logout
+            }
+
+            // Reset local state & UI
+            if (autoRefreshIntervalId) {
+                clearInterval(autoRefreshIntervalId);
+                autoRefreshIntervalId = null;
+                const toggle = document.getElementById('autoRefreshToggle');
+                if (toggle) toggle.checked = false;
+            }
+
+            authenticatedNickname = null;
+            document.getElementById('profileCard').style.display = 'none';
+            document.getElementById('qrcodeCard').style.display = 'none';
+            document.getElementById('mailboxCard').style.display = 'none';
+            document.getElementById('authSection').style.display = 'block';
+            document.getElementById('mainLayout').classList.remove('dashboard-active');
+
+            document.getElementById('authPassword').value = '';
+            document.getElementById('mailboxStatusNotice').style.display = 'none';
+            document.getElementById('notificationsList').innerHTML = `
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                    </svg>
+                    <p>Sessão encerrada com sucesso.</p>
+                </div>
+            `;
+            showToast('Sessão encerrada com sucesso.', 'info');
+        }
+
+        // Register or Change Nickname dynamically based on current state
+        async function handleSaveNickname() {
+            const baseUrl = getBaseUrl();
+            const newNick = document.getElementById('newNicknameInput').value.trim();
+
+            if (!newNick) {
+                showToast('Informe o nickname desejado.', 'error');
+                return;
+            }
+
+            const isFirstRegistration = !authenticatedNickname;
+            const primaryEndpoint = isFirstRegistration ? '/owner/nickname/register' : '/owner/nickname/change';
+
+            try {
+                let response = await fetch(`${baseUrl}${primaryEndpoint}?Nickname=${encodeURIComponent(newNick)}`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (response.status === 204 || response.status === 200) {
+                    updateNicknameUI(newNick);
+                    document.getElementById('newNicknameInput').value = '';
+                    showToast(`Nickname "${newNick}" salvo com sucesso!`, 'success');
+                    return;
+                }
+
+                if (response.status === 404) {
+                    const fallbackEndpoint = isFirstRegistration ? '/owner/nickname/change' : '/owner/nickname/register';
+                    response = await fetch(`${baseUrl}${fallbackEndpoint}?Nickname=${encodeURIComponent(newNick)}`, {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+
+                    if (response.status === 204 || response.status === 200) {
+                        updateNicknameUI(newNick);
+                        document.getElementById('newNicknameInput').value = '';
+                        showToast(`Nickname "${newNick}" salvo com sucesso!`, 'success');
+                        return;
+                    }
+                }
+
+                if (response.status === 409) {
+                    showToast('Este nickname já está em uso por outro usuário. Escolha outro.', 'error');
+                } else if (response.status === 401) {
+                    showToast('Sessão expirada. Faça login novamente.', 'error');
+                } else {
+                    const err = await response.text().catch(() => '');
+                    showToast(`Erro ao salvar nickname (${response.status}): ${err}`, 'error');
+                }
+            } catch (err) {
+                showToast(`Erro de conexão: ${err.message}`, 'error');
+            }
+        }
+
+        // Retrieve Nickname from Gateway API
+        async function handleRetrieveNickname() {
+            const baseUrl = getBaseUrl();
+            try {
+                const response = await fetch(`${baseUrl}/owner/nickname/retrieve`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.status === 204 || response.status === 404) {
+                    updateNicknameUI(null);
+                    showToast('Nenhum nickname cadastrado ainda.', 'info');
+                    return;
+                }
+
+                if (response.status === 200) {
+                    const nick = await response.json().catch(() => null);
+                    updateNicknameUI(nick);
+                    if (nick) {
+                        showToast(`Nickname sincronizado: "${nick}"`, 'info');
+                    } else {
+                        showToast('Nenhum nickname cadastrado.', 'info');
+                    }
+                } else if (response.status === 401) {
+                    showToast('Sessão expirada. Faça login novamente.', 'error');
+                } else {
+                    const err = await response.text().catch(() => '');
+                    showToast(`Erro ao consultar nickname: ${err}`, 'error');
+                }
+            } catch (err) {
+                showToast(`Erro ao consultar nickname: ${err.message}`, 'error');
+            }
+        }
+
+        // Fetch Notifications from Gateway Mailbox
+        async function handleFetchNotifications(isSilent = false) {
+            const baseUrl = getBaseUrl();
+            const amountInput = parseInt(document.getElementById('notifAmount').value, 10);
+            const offsetInput = parseInt(document.getElementById('notifOffset').value, 10);
+            const noticeEl = document.getElementById('mailboxStatusNotice');
+
+            const amount = isNaN(amountInput) || amountInput < 1 ? 10 : amountInput;
+            const offset = isNaN(offsetInput) || offsetInput < 0 ? 0 : offsetInput;
+
+            try {
+                const response = await fetch(`${baseUrl}/owner/notifications?msg_amount=${amount}&offset=${offset}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.status === 204) {
+                    if (noticeEl) noticeEl.style.display = 'none';
+                    renderNotifications([]);
+                    if (!isSilent) showToast('Caixa postal vazia.', 'info');
+                    return;
+                }
+
+                if (response.status === 200) {
+                    if (noticeEl) noticeEl.style.display = 'none';
+                    let data = [];
+                    try {
+                        data = await response.json();
+                    } catch (_) {
+                        data = [];
+                    }
+                    renderNotifications(data || []);
+                    if (!isSilent) {
+                        const count = Array.isArray(data) ? data.length : 0;
+                        showToast(`${count} notificação(ões) carregada(s).`, 'info');
+                    }
+                } else {
+                    const err = await response.text().catch(() => '');
+                    if (noticeEl) {
+                        noticeEl.style.display = 'block';
+                        noticeEl.style.background = 'rgba(245, 158, 11, 0.15)';
+                        noticeEl.style.border = '1px solid var(--accent-amber)';
+                        noticeEl.style.color = '#fbbf24';
+                        noticeEl.innerHTML = `⚠️ <strong>Aviso (${response.status}):</strong> O cookie de sessão não foi aceito nesta rota. Se você está usando o Live Server, certifique-se de que a API e o navegador usam o mesmo host (ex: ambos <code>127.0.0.1</code> ou ambos <code>localhost</code>).`;
+                    }
+                    if (!isSilent) showToast(`Erro ao buscar notificações (${response.status})`, 'error');
+                }
+            } catch (err) {
+                if (noticeEl) {
+                    noticeEl.style.display = 'block';
+                    noticeEl.style.background = 'rgba(239, 68, 68, 0.15)';
+                    noticeEl.style.border = '1px solid var(--accent-red)';
+                    noticeEl.style.color = '#fca5a5';
+                    noticeEl.innerHTML = `❌ <strong>Erro de Rede:</strong> Não foi possível conectar ao servidor (${err.message}).`;
+                }
+                if (!isSilent) showToast(`Erro de conexão: ${err.message}`, 'error');
+            }
+        }
+
+        // Render Notifications List
+        function renderNotifications(items) {
+            const listEl = document.getElementById('notificationsList');
+            if (!items || !Array.isArray(items) || items.length === 0) {
+                listEl.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                        </svg>
+                        <p>Nenhuma notificação encontrada no intervalo selecionado.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = items.map((item, index) => {
+                let content = '';
+                let isRead = false;
+                let timestamp = '';
+
+                if (Array.isArray(item)) {
+                    content = item.join(', ');
+                } else if (typeof item === 'object' && item !== null) {
+                    content = item.conteudo || item.payload || JSON.stringify(item);
+                    isRead = Boolean(item.lida);
+                    if (item.timestamp) {
+                        try {
+                            timestamp = new Date(item.timestamp).toLocaleString('pt-BR');
+                        } catch (_) {
+                            timestamp = String(item.timestamp);
+                        }
+                    }
+                } else {
+                    content = String(item);
+                }
+
+                if (!timestamp) {
+                    timestamp = `#${index + 1}`;
+                }
+
+                return `
+                    <div class="notif-item">
+                        <div class="notif-header">
+                            <span class="notif-status ${isRead ? 'read' : 'unread'}">
+                                ${isRead ? '✓ Lida' : '● Nova'}
+                            </span>
+                            <span>${timestamp}</span>
+                        </div>
+                        <div class="notif-content">${escapeHtml(content)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Toggle Auto-Refresh
+        function toggleAutoRefresh(enabled) {
+            if (autoRefreshIntervalId) {
+                clearInterval(autoRefreshIntervalId);
+                autoRefreshIntervalId = null;
+            }
+
+            if (enabled) {
+                showToast('Atualização automática ativada (a cada 5s).', 'info');
+                autoRefreshIntervalId = setInterval(() => {
+                    handleFetchNotifications(true);
+                }, 5000);
+            } else {
+                showToast('Atualização automática desativada.', 'info');
+            }
+        }
+
+        // Handle Send Public Notification (QR Simulation)
+        async function handleSendPublicNotification(event) {
+            event.preventDefault();
+            const baseUrl = getBaseUrl();
+            const nickname = document.getElementById('targetNickname').value.trim();
+            const payloadContent = document.getElementById('notifPayload').value.trim();
+
+            if (!nickname) {
+                showToast('Informe o nickname de destino.', 'error');
+                return;
+            }
+
+            const bodyData = payloadContent ? { payload: payloadContent } : null;
+
+            try {
+                const response = await fetch(`${baseUrl}/notifications/notificate?nickname=${encodeURIComponent(nickname)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: bodyData ? JSON.stringify(bodyData) : null
+                });
+
+                if (response.status === 204) {
+                    showToast(`Notificação enviada com sucesso para "${nickname}"!`, 'success');
+                    document.getElementById('notifPayload').value = '';
+
+                    // If we sent to our own active nickname, auto-refresh the list
+                    if (authenticatedNickname && nickname === authenticatedNickname) {
+                        setTimeout(() => handleFetchNotifications(true), 300);
+                    }
+                } else if (response.status === 404) {
+                    showToast(`Destinatário não encontrado: Nickname "${nickname}" inexistente.`, 'error');
+                } else if (response.status === 400) {
+                    showToast('Erro: Payload inválido.', 'error');
+                } else {
+                    const err = await response.text();
+                    showToast(`Erro no envio (${response.status}): ${err}`, 'error');
+                }
+            } catch (err) {
+                showToast(`Erro de conexão: ${err.message}`, 'error');
+            }
+        }
+
+        // Utility: Escape HTML
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

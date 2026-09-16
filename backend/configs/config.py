@@ -3,24 +3,40 @@ import os
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-#Gets the parameter of the environment, defaulting to 'development'
-#Could be set through docker configuration, take a look at it when using dockers later.
 ENV = os.getenv("APP_ENV", "development")
-class OverallSettings(BaseSettings):
+class EnvSettings(BaseSettings):
     IS_PRODUCTION: bool = False
+    model_config = SettingsConfigDict(
+        env_file=f".env.{ENV}",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
 class NetworkSettings(BaseSettings):
-    server_host: str = "0.0.0.0"
-    server_port: int = 8000
-    notify_route_path: str = "/api/v1/mailbox/{owner_id}/notify"
-    
+    SERVER_HOST: str = "127.0.0.1"
+    SERVER_PORT: int = 8000
+    NOTIF_ROUTE_PATH: str = "/notifications"
+    OWNER_ROUTE_PATH: str = "/owner"    
     model_config = SettingsConfigDict(
         env_file=f".env.{ENV}",
         env_prefix="NETWORK_",
         env_file_encoding="utf-8",
         extra="ignore"
     )
-
+class DatabaseSettings(BaseSettings):
+    IN_MEMORY: bool = True
+    SQLite3: bool = False
+    MAILBOX_DB_NAME: str = "mailbox"
+    OWNERREPO_DB_NAME: str = "ownerrepo"
+    MAILBOX_DB_PATH: str = "databases"
+    OWNERREPO_DB_PATH: str = "databases"
+    DB_PATH: str = "databases/app.db"
+    
+    model_config = SettingsConfigDict(
+        env_file=f".env.{ENV}",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 class LogSettings(BaseSettings):
     log_level: str = "DEBUG"
     max_retries: int = 3
@@ -32,9 +48,6 @@ class LogSettings(BaseSettings):
         extra="ignore"
     )
 
-"""Factory functions: to detach settings instantiation in import time, so that it is decided
-    in runtime and can be overwritten by monkeypatches"""
-#The idea is to make this get_network_settings be called by other functions. On my tests regarding network, monkeypatch it to be local.
 @lru_cache
 def get_network_settings() -> NetworkSettings:
     return NetworkSettings()
@@ -42,8 +55,15 @@ def get_network_settings() -> NetworkSettings:
 @lru_cache
 def get_log_settings() -> LogSettings:
     return LogSettings()
-def get_overall_settings()-> OverallSettings:
-    return OverallSettings()
+
+@lru_cache
+def get_db_settings()-> DatabaseSettings:
+    return DatabaseSettings()
+
+@lru_cache
+def get_env_settings()-> EnvSettings:
+    return EnvSettings()
+
 
 def setup_logging() -> None:
     """

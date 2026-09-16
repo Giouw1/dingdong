@@ -47,6 +47,25 @@ def test_delete_user(
     assert result == True
 
 
+def test_delete_user_with_nickname(
+    mock_owner_repo: AbstractOwnerRepository,
+    mock_id_generator: AbstractIDGenerator,
+):
+    owner_id = mock_id_generator.generate_id()
+    user_data = UserData("gio", "vanni")
+    mock_owner_repo.register_user(owner_id=owner_id, user_data=user_data)
+    mock_owner_repo.register_nickname(owner_id=owner_id, nickname="GioNick")
+    assert mock_owner_repo.get_nickname(owner_id) == "GioNick"
+    assert mock_owner_repo.get_user_id_by_nickname("GioNick") == owner_id
+
+    result = mock_owner_repo.delete_user(user_data=user_data)
+    assert result == True
+    assert mock_owner_repo.get_user_id(user_data) is None
+    assert mock_owner_repo.get_nickname(owner_id) is None
+    assert mock_owner_repo.get_user_id_by_nickname("GioNick") is None
+
+
+
 def test_retrieve_owner_id_valid(
     mock_owner_repo: AbstractOwnerRepository,
 ):

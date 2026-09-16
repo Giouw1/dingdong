@@ -1,6 +1,6 @@
 #Dependências à serem injetadas pelo main nas rotas
-from app.infrastructure.ownerrepo import InMemoryOwnerRepo, get_owner_repo, get_id_generator, MockID_Generator
-from app.infrastructure.mailbox import InMemoryMailbox, get_main_mailbox
+from app.infrastructure.inmemoryownerrepo import InMemoryOwnerRepo, get_owner_repo, get_id_generator, MockID_Generator
+from app.infrastructure.inmemorymailbox import InMemoryMailbox, get_main_mailbox
 from app.owner_path.owner_use_cases import OwnerUseCases, get_owner_use_cases, RegistrationError,ResourceNotFoundError, AuthenticationError
 from app.infrastructure.opaque_token_repo import OpaqueTokenStore, get_opaque_token_store
 
@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Header, Query, Re
 from typing import List, Any, Dict
 from pydantic import BaseModel
 import logging
-from configs.config import get_overall_settings, OverallSettings
+from configs.config import get_env_settings, EnvSettings
 
 router = APIRouter()
 security = HTTPBasic()
@@ -34,7 +34,7 @@ async def login(response: Response,
                 userdata: HTTPBasicCredentials = Depends(security),
                 store: OpaqueTokenStore = Depends(get_opaque_token_store),
                 usecases: OwnerUseCases = Depends(get_owner_use_cases),
-                settings: OverallSettings = Depends(get_overall_settings)
+                settings: EnvSettings = Depends(get_env_settings)
                 ):
     try:
         username_extraido = userdata.username
@@ -51,7 +51,7 @@ async def login(response: Response,
         value=opaque_token,
         httponly=True,  # Forbids JavaScript access (mitigates XSS)
         secure=settings.IS_PRODUCTION,    # Mandates transmission strictly over HTTPS
-        samesite="lax", # Mitigates Cross-Site Request Forgery (CSRF)
+        samesite="none" if settings.IS_PRODUCTION else "lax" , # Mitigates Cross-Site Request Forgery (CSRF)
         max_age=3600    # Hard expiration in seconds (1 hour)
     )
     try:
@@ -63,8 +63,9 @@ async def login(response: Response,
 
 
 
-@router.get("/notifications", response_model=List|List[Any], tags=["Verificar notificações"])
-async def get_notifications(opaque_owner_id: str = Cookie(..., alias="session_id"),
+@router.get("/notifications", response_model=List[Any]|None, tags=["Verificar notificações"])
+async def get_notifications(response: Response,
+                            opaque_owner_id: str = Cookie(..., alias="session_id"),
                             msg_amount: int = Query(default=1, description="Message amount", ge=1),
                             offset: int = Query(default=0, description="Message 'offset'", ge=0),
                             store: OpaqueTokenStore = Depends(get_opaque_token_store),
@@ -80,17 +81,14 @@ async def get_notifications(opaque_owner_id: str = Cookie(..., alias="session_id
     try:
         return usecases.get_notifications(owner_id=token, msg_amount=msg_amount, offset=offset)
     except ResourceNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail="There isn't such User."
-        )
+        response.status_code = status.HTTP_204_NO_CONTENT
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT, tags=["Logout de usuário"])
 async def logout(response: Response,
                 opaque_owner_id: str = Cookie(..., alias="session_id"),
                 store: OpaqueTokenStore = Depends(get_opaque_token_store),
-                settings: OverallSettings = Depends(get_overall_settings)
+                settings: EnvSettings = Depends(get_env_settings)
                 ):
     removal = store.remove_token(opaque_token=opaque_owner_id)
     if removal == False:

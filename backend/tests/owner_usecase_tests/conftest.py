@@ -1,14 +1,12 @@
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from configs.config import get_overall_settings
+from configs.config import get_env_settings
 from app.domain.storage_interfaces import (
     AbstractMailboxRepository,
     AbstractOwnerRepository,
     AbstractIDGenerator,
 )
-from app.infrastructure.mailbox import InMemoryMailbox
-from app.infrastructure.ownerrepo import InMemoryOwnerRepo, MockID_Generator
 from app.infrastructure.opaque_token_repo import OpaqueTokenStore, get_opaque_token_store
 from app.owner_path.owner_gateway import router
 from app.owner_path.owner_use_cases import OwnerUseCases, get_owner_use_cases
@@ -22,21 +20,6 @@ def test_app() -> FastAPI:
     app = FastAPI()
     app.include_router(router)
     return app
-
-
-@pytest.fixture
-def mock_owner_repo() -> AbstractOwnerRepository:
-    return InMemoryOwnerRepo()
-
-
-@pytest.fixture
-def mock_main_mailbox() -> AbstractMailboxRepository:
-    return InMemoryMailbox()
-
-
-@pytest.fixture
-def mock_id_generator(mock_owner_repo: AbstractOwnerRepository) -> AbstractIDGenerator:
-    return MockID_Generator(mock_owner_repo)
 
 
 @pytest.fixture
@@ -60,10 +43,10 @@ def client(
         notifmailbox=mock_main_mailbox,
         id_generator=mock_id_generator,
     )
-    overallsettings = get_overall_settings()
+    overallsettings = get_env_settings()
     test_app.dependency_overrides[get_opaque_token_store] = lambda: mock_store
     test_app.dependency_overrides[get_owner_use_cases] = lambda: mock_usecases
-    test_app.dependency_overrides[get_overall_settings] = lambda: overallsettings
+    test_app.dependency_overrides[get_env_settings] = lambda: overallsettings
 
     with TestClient(app=test_app) as test_client:
         yield test_client

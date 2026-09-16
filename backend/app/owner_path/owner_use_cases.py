@@ -3,6 +3,7 @@ from app.domain.storage_interfaces import AbstractOwnerRepository, AbstractIDGen
 from app.domain.storage_interfaces import AbstractMailboxRepository
 from app.domain.entities import UserData, NotificationPayload, Nickname, OwnerID
 import logging
+from app.owner_path.pass_hasher import get_hasher
 from typing import List
 from pydantic import validate_call, ValidationError
 """ 
@@ -22,25 +23,19 @@ class OwnerUseCases(AbstractOwnerUseCases):
 
     def register(self, username:str , password:str)->str|RegistrationError:
         id = self.id_generator.generate_id()
+        hasher = get_hasher()
+        password = hasher.hash(password)
         user_data = UserData(username=username,password=password)
 
         result = self.ownermailbox.register_user(owner_id=id,user_data=user_data) 
-
         if result == False:
             logging.error(f"Collision in OwnerRepository for username {username}")
             raise RegistrationError("User registration failed: already registered username.")
-
-        result = self.notifmailbox.register_user(id)
-
-        if result == False:
-            self.ownermailbox.delete_user(id)
-            logging.error(f"Collision in MailboxRepository. Executing rollback for ID {id}")
-            raise RegistrationError("Mailbox initialization failed. Registration aborted.")
-
         return id.owner_id
 
     def login(self, username:str , password:str)->str|AuthenticationError:
-
+        hasher = get_hasher()
+        password = hasher.hash(password)
         user_data = UserData(username=username,password=password)
 
         result = self.ownermailbox.get_user_id(user_data)
@@ -58,9 +53,8 @@ class OwnerUseCases(AbstractOwnerUseCases):
         result = self.notifmailbox.get_notifications(target_id=owner_id)
         
         if result == None:
-            logging.error(f"Read attempt on non-existent mailbox ID {owner_id}")
-            raise ResourceNotFoundError("User not found")
-        #Talvez construir o DTO antes de retornar aqui
+            logging.error(f"Empty mailbox for: {owner_id}")
+            raise ResourceNotFoundError("No notification for this user")
         return result[offset:offset+msg_amount]
     
     def register_nickname(self,owner_id:str,nickname:str)->bool|RegistrationError:
@@ -109,6 +103,5 @@ class OwnerUseCases(AbstractOwnerUseCases):
         if result == None:
             raise ResourceNotFoundError("No ID associated to that nickname")
         return result.owner_id
-
 def get_owner_use_cases()->OwnerUseCases:
     raise NotImplementedError("This dependency must be overridden by the main application.")

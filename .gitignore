@@ -12,7 +12,6 @@ ENV/
 
 # Environment and Secrets
 .env
-.env.*
 !.env.example
 READDEV.MD
 
@@ -26,3 +25,4 @@ READDEV.MD
 .idea/
 .DS_Store
 Thumbs.db
+*.code-workspace

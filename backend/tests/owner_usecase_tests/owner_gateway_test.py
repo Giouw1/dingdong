@@ -95,3 +95,66 @@ def test_change_nickname_retrieve_valid(client:TestClient):
     assert response.json() == "Giovanni"
 
 
+def test_get_notifications_invalid_msg_amount_type(client: TestClient):
+    client.cookies.set(name="session_id", value="a" * 43)
+    response = client.get("/notifications", params={"msg_amount": "invalid_int"})
+    assert response.status_code == 422
+
+
+def test_get_notifications_invalid_offset_type(client: TestClient):
+    client.cookies.set(name="session_id", value="a" * 43)
+    response = client.get("/notifications", params={"offset": "invalid_int"})
+    assert response.status_code == 422
+
+
+def test_get_notifications_invalid_msg_amount_constraint(client: TestClient):
+    client.cookies.set(name="session_id", value="a" * 43)
+    response = client.get("/notifications", params={"msg_amount": 0})
+    assert response.status_code == 422
+
+
+def test_get_notifications_invalid_offset_constraint(client: TestClient):
+    client.cookies.set(name="session_id", value="a" * 43)
+    response = client.get("/notifications", params={"offset": -1})
+    assert response.status_code == 422
+
+
+def test_get_notifications_invalid_cookie_length(client: TestClient):
+    client.cookies.set(name="session_id", value="short_token")
+    response = client.get("/notifications")
+    assert response.status_code == 422
+
+
+def test_get_notifications_missing_cookie(client: TestClient):
+    response = client.get("/notifications")
+    assert response.status_code == 422
+
+
+def test_register_nickname_missing_cookie(client: TestClient):
+    response = client.post("/nickname/register", params={"Nickname": "Giovanni"})
+    assert response.status_code == 422
+
+
+def test_register_nickname_missing_param(client: TestClient):
+    client.cookies.set(name="session_id", value="a" * 43)
+    response = client.post("/nickname/register")
+    assert response.status_code == 422
+
+
+def test_change_nickname_missing_param(client: TestClient):
+    client.cookies.set(name="session_id", value="a" * 43)
+    response = client.post("/nickname/change")
+    assert response.status_code == 422
+
+
+def test_logout_missing_cookie(client: TestClient):
+    response = client.post("/logout")
+    assert response.status_code == 422
+
+
+def test_retrieve_nickname_missing_cookie(client: TestClient):
+    response = client.get("/nickname/retrieve")
+    assert response.status_code == 422
+
+
+

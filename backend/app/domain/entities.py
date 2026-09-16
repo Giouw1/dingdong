@@ -39,3 +39,4 @@ class Nickname:
     nickname: str
     def __post_init__(self):
         pass
+

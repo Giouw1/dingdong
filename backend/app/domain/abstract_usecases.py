@@ -65,3 +65,12 @@ class AbstractNotificatorUseCases(ABC):
     @abstractmethod
     def notificate()->Union[ResourceNotFoundError,InvalidPayloadError,True]:
         pass
+
+class AbstractHasher(ABC):
+    @abstractmethod
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def hash(self, text_to_encode:str)->str:
+        pass

@@ -1,0 +1,20 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dingdong_backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env.development
+    environment:
+      - APP_ENV=development
+      - NETWORK_SERVER_HOST=0.0.0.0
+    volumes:
+      - sqlite_data:/app/databases
+      - ./backend/frontend:/app/frontend:ro
+
+volumes:
+  sqlite_data:
+    driver: local

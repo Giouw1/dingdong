@@ -32,7 +32,7 @@ class InMemoryOwnerRepo(AbstractOwnerRepository):
         del self.db[user_data]
 
         if id in self.db_id_to_nick:
-            nickname = self.db_id_to_nick[user_data]
+            nickname = self.db_id_to_nick[id]
             del self.db_id_to_nick[id]
         #Not verifying it here because needs to be true
             del self.db_nick_to_id[nickname]

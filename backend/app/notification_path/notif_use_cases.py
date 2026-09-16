@@ -23,7 +23,7 @@ class Notificator_UseCases(AbstractNotificatorUseCases):
         Constructs the NotificationPayload internally with metadata.
         """
             
-
+        nickname = Nickname(nickname=nickname)
         owner_id = self.ownermailbox.get_user_id_by_nickname(nickname=nickname)
         if owner_id is None:
             raise ResourceNotFoundError("There is no User with such Nickname")

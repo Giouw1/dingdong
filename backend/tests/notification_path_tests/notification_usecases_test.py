@@ -14,8 +14,7 @@ def test_valid_save(
     mock_owner_mailbox: AbstractOwnerRepository,
 ):
     mock_owner_mailbox.register_user(owner_id="1", user_data=UserData(username="Gio", password="Vanni"))
-    mock_owner_mailbox.register_nickname(owner_id="1", nickname="vasco")
-    mock_main_mailbox.register_user("1")
+    mock_owner_mailbox.register_nickname(owner_id="1", nickname=Nickname(nickname="vasco"))
     notifusecases = Notificator_UseCases(notifmailbox=mock_main_mailbox, ownermailbox=mock_owner_mailbox)
     result = notifusecases.notificate("vasco", payload="Estive aqui")
     assert result is True
@@ -32,8 +31,7 @@ def test_valid_save_default_payload(
     mock_owner_mailbox: AbstractOwnerRepository,
 ):
     mock_owner_mailbox.register_user(owner_id="1", user_data=UserData(username="Gio", password="Vanni"))
-    mock_owner_mailbox.register_nickname(owner_id="1", nickname="vasco")
-    mock_main_mailbox.register_user("1")
+    mock_owner_mailbox.register_nickname(owner_id="1", nickname=Nickname(nickname="vasco"))
     notifusecases = Notificator_UseCases(notifmailbox=mock_main_mailbox, ownermailbox=mock_owner_mailbox)
     result = notifusecases.notificate("vasco", payload=None)
     assert result is True
@@ -49,12 +47,11 @@ def test_invalid_payload_save(
     mock_owner_mailbox: AbstractOwnerRepository,
 ):
     mock_owner_mailbox.register_user(owner_id="1", user_data=UserData(username="Gio", password="Vanni"))
-    mock_owner_mailbox.register_nickname(owner_id="1", nickname="vasco")
-    mock_main_mailbox.register_user("1")
+    mock_owner_mailbox.register_nickname(owner_id="1", nickname=Nickname(nickname="vasco"))
     notifusecases = Notificator_UseCases(notifmailbox=mock_main_mailbox, ownermailbox=mock_owner_mailbox)
     with pytest.raises(InvalidPayloadError):
         notifusecases.notificate("vasco", payload=f"{[i for i in range(260)]}")
-    assert mock_main_mailbox.get_notifications("1") == []
+    assert mock_main_mailbox.get_notifications("1") == None
 
 
 def test_nonexistant_user_save(

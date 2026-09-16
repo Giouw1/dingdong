@@ -13,18 +13,14 @@ class InMemoryMailbox(AbstractMailboxRepository):
         self.db :Dict[str,List[NotificationPayload]] =  dict()
     def save(self,target_id:OwnerID,payload: NotificationPayload)->bool:
         if target_id not in self.db:
-            return False
+            self.db[target_id] = [payload]
+            return True
         self.db[target_id].append(payload)
         return True
     def get_notifications(self,target_id:OwnerID)->List[NotificationPayload]|None:
         if target_id not in self.db:
             return None
         return self.db[target_id]
-    def register_user(self,target_id:OwnerID)-> bool:
-        if target_id in self.db:
-            return False
-        self.db[target_id] = []
-        return True
     def delete_user(self,target_id:OwnerID)-> bool:
         if target_id not in self.db:
             return False

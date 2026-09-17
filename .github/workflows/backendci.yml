@@ -6,7 +6,8 @@ on:
       - '**'
     paths:
       - 'backend/**'
-      - '.github/workflows/backend.yml'
+      - '.github/workflows/backendci.yml'
+      - '.github/workflows/backendcd.yml'
 
   pull_request:
     branches: [main]
@@ -37,3 +38,4 @@ jobs:
       - name: Execute Test Suite
         run: |
           pytest backend
+#Mudança qualquer pra ativar o CI e testar o CD

@@ -10,4 +10,4 @@ venv
 .gitignore
 tests
 .db
-frontend
+#frontend

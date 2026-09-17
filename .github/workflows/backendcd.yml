@@ -5,10 +5,16 @@ on:
     branches: [ main ]
     paths:
       - 'backend/**'
+      - '.github/workflows/backendci.yml'
+      - '.github/workflows/backendcd.yml'
+
   pull_request:
     branches: [ main ]
     paths:
       - 'backend/**'
+      - '.github/workflows/backendci.yml'
+      - '.github/workflows/backendcd.yml'
+
 
 env:
   REGISTRY: ghcr.io
@@ -58,7 +64,7 @@ jobs:
           cache-to: type=gha,mode=max
 
 
-          
+
   deploy:
     needs: build-and-push
     # Executa o deploy EXCLUSIVAMENTE quando o commit entrar de fato na main

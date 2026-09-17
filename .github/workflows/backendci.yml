@@ -2,7 +2,8 @@ name: CI Pipeline
 #Triggers for the workflows
 on:
   push:
-    branches: [develop, main]
+    branches: 
+      - '**'
     paths:
       - 'backend/**'
       - '.github/workflows/backend.yml'

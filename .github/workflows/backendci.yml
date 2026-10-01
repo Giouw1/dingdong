@@ -13,7 +13,7 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
-      - '.github/workflows/backend.yml'
+      - '.github/workflows/backendci.yml'
 
 jobs:
   test:

@@ -20,8 +20,7 @@ COPY ./configs ./configs
 COPY ./frontend ./frontend
 COPY main.py .
 
-# 4. Declare volume mount point for persistent data
-VOLUME ["/app/databases"]
+VOLUME ["/app/data"]
 
 EXPOSE 8000
 

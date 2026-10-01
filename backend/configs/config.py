@@ -2,7 +2,7 @@ import logging.config
 import os
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from pathlib import Path
 ENV = os.getenv("APP_ENV", "development")
 class EnvSettings(BaseSettings):
     IS_PRODUCTION: bool = False
@@ -19,7 +19,6 @@ class NetworkSettings(BaseSettings):
     OWNER_ROUTE_PATH: str = "/owner"    
     model_config = SettingsConfigDict(
         env_file=f".env.{ENV}",
-        env_prefix="NETWORK_",
         env_file_encoding="utf-8",
         extra="ignore"
     )
@@ -47,6 +46,17 @@ class LogSettings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore"
     )
+class FrontendSettings(BaseSettings):
+    FRONTEND_PATH: Path = Path("data/frontend")
+
+    model_config = SettingsConfigDict(
+        env_file=f".env.{ENV}",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
+@lru_cache
+def get_frontend_settings() -> FrontendSettings:
+    return FrontendSettings()
 
 @lru_cache
 def get_network_settings() -> NetworkSettings:

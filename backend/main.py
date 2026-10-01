@@ -12,14 +12,14 @@ from fastapi.responses import FileResponse
 from pathlib import Path
 from app.notification_path.notif_gateway import notif_router
 from app.notification_path.notif_use_cases import Notificator_UseCases, get_notifier_use_cases
-from configs.config import get_db_settings, get_network_settings, get_log_settings, get_env_settings
+from configs.config import get_frontend_settings, get_db_settings, get_network_settings, get_log_settings, get_env_settings
 
-FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
 
 
 db_settings = get_db_settings()
 network_settings = get_network_settings()
 env_settings = get_env_settings()
+frontend_settings = get_frontend_settings()
 app = FastAPI()
 #Parte de CORS, verificar e usar nas configurações antes de jogar a público.
 origins = [
@@ -54,13 +54,13 @@ app.include_router(router=notif_router,prefix=network_settings.NOTIF_ROUTE_PATH,
 
 @app.get("/", status_code=status.HTTP_200_OK, response_class=FileResponse, tags=["Frontend"])
 async def return_html_page():
-    file_path = FRONTEND_DIR / "frontend.html"
+    file_path =  frontend_settings.FRONTEND_PATH / "frontend.html"
     return FileResponse(path=file_path, media_type="text/html")
 
 @app.get("/notify", status_code=status.HTTP_200_OK, response_class=FileResponse, tags=["Frontend"])
 @app.get("/notify.html", status_code=status.HTTP_200_OK, response_class=FileResponse, tags=["Frontend"])
 async def return_notify_page():
-    file_path = FRONTEND_DIR / "notify.html"
+    file_path = frontend_settings.FRONTEND_PATH / "notify.html"
     return FileResponse(path=file_path, media_type="text/html")
 
 if __name__ == "__main__":

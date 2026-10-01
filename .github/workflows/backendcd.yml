@@ -74,6 +74,16 @@ jobs:
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Sincronizar Frontend com Azure File Share
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az storage file upload-batch \
+              --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}" \
+              --account-key "${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}" \
+              --destination "sqlite-share/frontend" \
+              --source "backend/frontend"
       - name: Deploy no Azure Container Instance
         uses: azure/aci-deploy@v1
         with:
@@ -83,14 +93,19 @@ jobs:
           registry-login-server: ghcr.io
           registry-username: ${{ github.actor }}
           registry-password: ${{ secrets.DEPLOY_GHCR_TOKEN }}
+          environment-variables: ${{vars}}
           location: 'chilecentral'
           dns-name-label: dingdong-backend-giou
           ports: 8000
-          environment-variables: NETWORK_SERVER_HOST=0.0.0.0 IN_MEMORY=True
+          azure-file-volume-account-name: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
+          azure-file-volume-account-key: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+          azure-file-volume-share-name: 'sqlite-share'
+          azure-file-volume-mount-path: '/app/data'
 
 
 
 
 
 
-          
+
+

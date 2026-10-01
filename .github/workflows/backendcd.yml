@@ -83,7 +83,7 @@ jobs:
           registry-login-server: ghcr.io
           registry-username: ${{ github.actor }}
           registry-password: ${{ secrets.DEPLOY_GHCR_TOKEN }}
-          environment-variables: ${{vars}}
+          environment-variables: ${{vars.CONTAINER_ENV_VARIABLES}}
           location: 'chilecentral'
           dns-name-label: dingdong-backend-giou
           ports: 8000

@@ -89,7 +89,7 @@ jobs:
           ports: 8000
           azure-file-volume-account-name: ${{ secrets.AZURE_STORAGE_NAME }}
           azure-file-volume-account-key: ${{ secrets.AZURE_STORAGE_KEY }}
-          azure-file-volume-share-name: 'digndong-share'
+          azure-file-volume-share-name: 'dingdong-share'
           azure-file-volume-mount-path: '/app/data'
 
 

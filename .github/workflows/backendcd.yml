@@ -69,22 +69,21 @@ jobs:
     # Executa o deploy EXCLUSIVAMENTE quando o commit entrar de fato na main
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
-
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Login na Azure
+        uses: azure/login@v2
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            echo "${{ secrets.DEPLOY_GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker pull ghcr.io/${{ env.IMAGE_NAME }}:latest
-            docker stop meu-app || true
-            docker rm meu-app || true
-            docker run -d \
-              --name meu-app \
-              --restart unless-stopped \
-              -p 8000:8000 \
-              ghcr.io/${{ env.IMAGE_NAME }}:latest
-            docker image prune -f
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Deploy no Azure Container Instance
+        uses: azure/aci-deploy@v1
+        with:
+          resource-group: dingdongbackend
+          name: backend
+          image: ghcr.io/${{ env.IMAGE_NAME }}:latest
+          registry-login-server: ghcr.io
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ secrets.DEPLOY_GHCR_TOKEN }}
+          location: 'chilecentral'
+          dns-name-label:
+          ports: 8000
+          environment-variables: NETWORK_SERVER_HOST=0.0.0.0 IN_MEMORY=True

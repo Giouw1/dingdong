@@ -84,9 +84,8 @@ jobs:
           registry-username: ${{ github.actor }}
           registry-password: ${{ secrets.DEPLOY_GHCR_TOKEN }}
           location: 'chilecentral'
-          dns-name-label:
+          dns-name-label: dingdong-backend-giou
           ports: 8000
           environment-variables: NETWORK_SERVER_HOST=0.0.0.0 IN_MEMORY=True
 
 
-          

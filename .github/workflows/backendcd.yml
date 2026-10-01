@@ -15,7 +15,6 @@ on:
       - '.github/workflows/backendci.yml'
       - '.github/workflows/backendcd.yml'
 
-
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: giouw1/dingdongbackend

@@ -17,7 +17,6 @@ RUN mkdir -p /app/databases
 # 3. Copy application code
 COPY ./app ./app
 COPY ./configs ./configs
-COPY ./frontend ./frontend
 COPY main.py .
 
 VOLUME ["/app/data"]

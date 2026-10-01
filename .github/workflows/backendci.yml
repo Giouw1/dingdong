@@ -36,6 +36,7 @@ jobs:
           pip install -r backend/requirements-dev.txt
           
       - name: Execute Test Suite
+        working-directory: backend
         run: |
-          pytest backend
+          pytest
 #Mudança qualquer pra ativar o CI e testar o CD

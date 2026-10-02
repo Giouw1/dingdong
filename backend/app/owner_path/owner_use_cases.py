@@ -103,5 +103,26 @@ class OwnerUseCases(AbstractOwnerUseCases):
         if result == None:
             raise ResourceNotFoundError("No ID associated to that nickname")
         return result.owner_id
+
+#Admin path??? i use opaque token, it is not admin yet, it is user
+
+#Validate idea:: let every user delete, but must have username, password, and owner id (impossible if not logged supposedly) to delete an user.
+#When I do admin path, ill check how to
+    def delete_user(self, username:str, password:str, owner_id:str)-> True|ResourceNotFoundError|AuthenticationError:
+        hasher = get_hasher()
+        password = hasher.hash(password)
+        user_data = UserData(username=username,password=password)
+        owner_id = OwnerID(owner_id=owner_id)
+        result_owner_id = self.ownermailbox.get_user_id(user_data=user_data)
+        if (result_owner_id == None):
+            raise ResourceNotFoundError("No such entry to delete")
+        elif (result_owner_id != owner_id):
+            raise AuthenticationError("User trying to delete an invalid user data")
+
+        result = self.ownermailbox.delete_user(user_data=user_data)
+
+        self.notifmailbox.delete_user(target_id=owner_id)
+        
+        return True
 def get_owner_use_cases()->OwnerUseCases:
     raise NotImplementedError("This dependency must be overridden by the main application.")

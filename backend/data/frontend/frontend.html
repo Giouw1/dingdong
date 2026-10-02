@@ -476,9 +476,48 @@
             user-select: none;
         }
 
-        .toggle-wrapper input {
-            cursor: pointer;
-            accent-color: var(--primary);
+        /* Modal Dialog */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background-color: var(--surface);
+            border: 1px solid var(--accent-red);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: var(--shadow);
+            animation: slideIn 0.25s ease;
+        }
+
+        .modal-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--accent-red);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 18px;
         }
     </style>
 </head>
@@ -559,7 +598,10 @@
 
                     <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;" />
 
-                    <button class="btn btn-danger" onclick="handleLogout()">Encerrar Sessão (Logout)</button>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button class="btn btn-secondary" onclick="handleLogout()">Encerrar Sessão (Logout)</button>
+                        <button class="btn btn-danger" onclick="openDeleteAccountModal()">Excluir Conta Definitivamente</button>
+                    </div>
                 </section>
 
                 <!-- Dedicated QR Code Card for the Authenticated User -->
@@ -692,6 +734,36 @@
                 </div>
             </div>
         </section>
+    </div>
+
+    <!-- Modal de Confirmação de Exclusão de Conta -->
+    <div id="deleteAccountModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-title">
+                ⚠️ Confirmar Exclusão de Conta
+            </div>
+            <p class="modal-desc">
+                Esta ação é <strong>irreversível</strong>. Todos os seus dados, nicknames e mensagens na caixa postal serão excluídos permanentemente.<br><br>
+                Para confirmar, reconfirme suas credenciais de acesso:
+            </p>
+
+            <form onsubmit="handleConfirmDeleteAccount(event)">
+                <div class="form-group">
+                    <label for="deleteUsernameConfirm">Seu Nome de Usuário (Username):</label>
+                    <input type="text" id="deleteUsernameConfirm" class="input-control" required placeholder="Digite seu usuário atual" autocomplete="username" />
+                </div>
+
+                <div class="form-group">
+                    <label for="deletePasswordConfirm">Sua Senha (Password):</label>
+                    <input type="password" id="deletePasswordConfirm" class="input-control" required placeholder="Digite sua senha atual" autocomplete="current-password" />
+                </div>
+
+                <div class="btn-row" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeDeleteAccountModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-danger" id="btnConfirmDelete">Sim, Excluir Conta</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Toast Notification Overlay -->
@@ -1107,6 +1179,108 @@
                 </div>
             `;
             showToast('Sessão encerrada com sucesso.', 'info');
+        }
+
+        // Modal Controls for Delete Account
+        function openDeleteAccountModal() {
+            const modal = document.getElementById('deleteAccountModal');
+            const userField = document.getElementById('deleteUsernameConfirm');
+            const passField = document.getElementById('deletePasswordConfirm');
+            // Suggest the username previously typed if available, but leave password empty for re-entry
+            const authUser = document.getElementById('authUsername')?.value || '';
+            if (userField) userField.value = authUser;
+            if (passField) passField.value = '';
+            modal.style.display = 'flex';
+            if (userField && !userField.value) {
+                userField.focus();
+            } else if (passField) {
+                passField.focus();
+            }
+        }
+
+        function closeDeleteAccountModal() {
+            const modal = document.getElementById('deleteAccountModal');
+            modal.style.display = 'none';
+            document.getElementById('deletePasswordConfirm').value = '';
+        }
+
+        // Handle Confirm Delete Account (DELETE /owner/)
+        async function handleConfirmDeleteAccount(event) {
+            event.preventDefault();
+            const baseUrl = getBaseUrl();
+            const username = document.getElementById('deleteUsernameConfirm').value.trim();
+            const password = document.getElementById('deletePasswordConfirm').value;
+            const btnSubmit = document.getElementById('btnConfirmDelete');
+
+            if (!username || !password) {
+                showToast('Informe usuário e senha para confirmar a exclusão.', 'error');
+                return;
+            }
+
+            const authHeader = createBasicAuthHeader(username, password);
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = 'Excluindo...';
+
+            try {
+                const response = await fetch(`${baseUrl}/owner/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': authHeader
+                    },
+                    credentials: 'include'
+                });
+
+                if (response.status === 204 || response.status === 200) {
+                    closeDeleteAccountModal();
+                    showToast('Conta excluída com sucesso!', 'success');
+
+                    // Reset local session & UI
+                    if (autoRefreshIntervalId) {
+                        clearInterval(autoRefreshIntervalId);
+                        autoRefreshIntervalId = null;
+                        const toggle = document.getElementById('autoRefreshToggle');
+                        if (toggle) toggle.checked = false;
+                    }
+
+                    authenticatedNickname = null;
+                    document.getElementById('profileCard').style.display = 'none';
+                    document.getElementById('qrcodeCard').style.display = 'none';
+                    document.getElementById('mailboxCard').style.display = 'none';
+                    document.getElementById('authSection').style.display = 'block';
+                    document.getElementById('mainLayout').classList.remove('dashboard-active');
+
+                    // Clean inputs
+                    document.getElementById('authUsername').value = '';
+                    document.getElementById('authPassword').value = '';
+                    document.getElementById('deleteUsernameConfirm').value = '';
+                    document.getElementById('deletePasswordConfirm').value = '';
+                    document.getElementById('mailboxStatusNotice').style.display = 'none';
+                    document.getElementById('notificationsList').innerHTML = `
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                            </svg>
+                            <p>Sua conta foi excluída definitivamente.</p>
+                        </div>
+                    `;
+                } else if (response.status === 401) {
+                    showToast('Sua sessão expirou ou é inválida. Faça login novamente.', 'error');
+                    closeDeleteAccountModal();
+                    handleLogout();
+                } else if (response.status === 403) {
+                    showToast('As credenciais informadas não correspondem à conta logada atualmente.', 'error');
+                } else if (response.status === 404) {
+                    showToast('Usuário não encontrado.', 'error');
+                } else {
+                    const err = await response.text().catch(() => '');
+                    showToast(`Falha ao excluir conta (${response.status}): ${err}`, 'error');
+                }
+            } catch (err) {
+                showToast(`Erro de conexão: ${err.message}`, 'error');
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = 'Sim, Excluir Conta';
+            }
         }
 
         // Register or Change Nickname dynamically based on current state

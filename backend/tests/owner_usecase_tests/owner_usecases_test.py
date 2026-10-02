@@ -264,5 +264,34 @@ def test_retrieve_id_nonexistant(
     with pytest.raises(ResourceNotFoundError):
         usecases.retrieve_id_by_nickname(nickname=Nickname(nickname="CRVG"))
 
+def test_delete_user_valid(
+    mock_main_mailbox: AbstractMailboxRepository,
+    mock_owner_repo: AbstractOwnerRepository,
+    mock_id_generator: AbstractIDGenerator,
+):
+    usecases = OwnerUseCases(ownermailbox=mock_owner_repo, notifmailbox=mock_main_mailbox, id_generator=mock_id_generator)
+    usecases.register(username="gio", password="vanni")
+    id = usecases.login(username="gio", password="vanni")
+    usecases.delete_user(owner_id=id,password="vanni",username="gio")
+    with pytest.raises(AuthenticationError):
+        usecases.login(username="gio", password="vanni")
+def test_delete_user_nonexisting(
+    mock_main_mailbox: AbstractMailboxRepository,
+    mock_owner_repo: AbstractOwnerRepository,
+    mock_id_generator: AbstractIDGenerator,
+):
+    usecases = OwnerUseCases(ownermailbox=mock_owner_repo, notifmailbox=mock_main_mailbox, id_generator=mock_id_generator)
+    with pytest.raises(ResourceNotFoundError):
+        usecases.delete_user(owner_id=10,password="vanni",username="gio")
+def test_delete_user_nonexisting_malicious(
+    mock_main_mailbox: AbstractMailboxRepository,
+    mock_owner_repo: AbstractOwnerRepository,
+    mock_id_generator: AbstractIDGenerator,
+):
+    usecases = OwnerUseCases(ownermailbox=mock_owner_repo, notifmailbox=mock_main_mailbox, id_generator=mock_id_generator)
+    usecases.register(username="gio", password="vanni")
+    with pytest.raises(AuthenticationError):
+        usecases.delete_user(owner_id=10,password="vanni",username="gio")
+
 
 

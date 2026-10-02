@@ -168,3 +168,23 @@ async def retrieve_nick(opaque_owner_id: str = Cookie(..., alias="session_id"),
     except ResourceNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="There is no nickname attached to the user: please register one")
 
+@router.delete("/", status_code=status.HTTP_204_NO_CONTENT, tags=["Deletar usuário"])
+async def delete_user(userdata: HTTPBasicCredentials = Depends(security),
+                    opaque_owner_id: str = Cookie(..., alias="session_id"),
+                    usecases: OwnerUseCases = Depends(get_owner_use_cases),
+                    store: OpaqueTokenStore = Depends(get_opaque_token_store),
+                    ):
+    owner_id = store.get_token(opaque_owner_id)
+    username = userdata.username
+    password = userdata.password
+    if owner_id == None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, 
+    )
+    store.remove_token(opaque_token=opaque_owner_id)
+    try:
+        return usecases.delete_user(username=username,password=password,owner_id=owner_id)
+    except AuthenticationError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot exclude a login different than yours")
+    except ResourceNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail= "You cannot exclude a non existant user")

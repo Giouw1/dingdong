@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 import pytest
 import logging
-from app.domain.storage_interfaces import AbstractMailboxRepository
+from app.domain.storage_interfaces import AbstractMailboxRepository, AbstractOwnerRepository
 from app.domain.entities import OwnerID
 from app.infrastructure.opaque_token_repo import OpaqueTokenStore
 from hashlib import  md5
@@ -156,5 +156,33 @@ def test_retrieve_nickname_missing_cookie(client: TestClient):
     response = client.get("/nickname/retrieve")
     assert response.status_code == 422
 
+def test_delete_user(client: TestClient, 
+                    mock_store:OpaqueTokenStore):        
+    response = client.post("/register", auth=("test_user","securepassword"))
+    assert response.status_code == 204
+    response = client.post("/login",auth=("test_user","securepassword"))
+    assert response.status_code == 204  
+    opaque_token = response.cookies.get(name="session_id")
+    response = client.delete("/", auth=("test_user","securepassword"))
+    assert response.status_code == 204
+    response = client.post("/login",auth=("test_user","securepassword"))
+    assert response.status_code == 401
+    assert mock_store.get_token(opaque_token) == None
 
+def test_delete_user_nonexistant(client: TestClient,mock_store:OpaqueTokenStore):
+    result = mock_store.generate_and_store("abc")          
+    client.cookies.set(name="session_id",value=result)
+    response = client.delete("/", auth=("test_user","securepassword"))
+    assert response.status_code == 404
 
+def test_delete_user_invalid(client: TestClient, mock_store:OpaqueTokenStore):
+    mock_cookie = mock_store.generate_and_store("abc")        
+    response = client.post("/register", auth=("test_user","securepassword"))
+    assert response.status_code == 204
+    response = client.post("/login",auth=("test_user","securepassword"))
+    assert response.status_code == 204  
+    client.cookies.clear()
+    client.cookies.set(name="session_id",value=mock_cookie)
+    client.cookies.get(name="session_id") == mock_cookie
+    response = client.delete("/", auth=("test_user","securepassword"))
+    assert response.status_code == 403

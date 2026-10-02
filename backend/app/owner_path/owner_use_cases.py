@@ -4,7 +4,7 @@ from app.domain.storage_interfaces import AbstractMailboxRepository
 from app.domain.entities import UserData, NotificationPayload, Nickname, OwnerID
 import logging
 from app.owner_path.pass_hasher import get_hasher
-from typing import List
+from typing import List, Union
 from pydantic import validate_call, ValidationError
 """ 
     Todas as funcionalidades expostas ao cliente dono do mailbox, lida com todo esse lado
@@ -108,7 +108,7 @@ class OwnerUseCases(AbstractOwnerUseCases):
 
 #Validate idea:: let every user delete, but must have username, password, and owner id (impossible if not logged supposedly) to delete an user.
 #When I do admin path, ill check how to
-    def delete_user(self, username:str, password:str, owner_id:str)-> True|ResourceNotFoundError|AuthenticationError:
+    def delete_user(self, username:str, password:str, owner_id:str)-> Union[True,ResourceNotFoundError,AuthenticationError]:
         hasher = get_hasher()
         password = hasher.hash(password)
         user_data = UserData(username=username,password=password)

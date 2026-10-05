@@ -13,4 +13,6 @@ If you want to try a real world notification scenario, where you pick your phone
 
 In that scenario, re-do the initial request with the new URL NGROK exposed, and then scan the QR code with your phone! 
 
+Be aware that, if one wants to go further with it, must change the env variables and the image build, possibly.
+
 Have fun!

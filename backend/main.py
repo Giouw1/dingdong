@@ -12,9 +12,11 @@ from fastapi.responses import FileResponse
 from pathlib import Path
 from app.notification_path.notif_gateway import notif_router
 from app.notification_path.notif_use_cases import Notificator_UseCases, get_notifier_use_cases
-from configs.config import get_frontend_settings, get_db_settings, get_network_settings, get_log_settings, get_env_settings
+from configs.config import get_frontend_settings, get_db_settings, get_network_settings, get_log_settings, get_env_settings, setup_logging
+from app.infrastructure.logging_middleware import NetworkLoggingMiddleware
 
-
+# Inicialização do logging
+setup_logging()
 
 db_settings = get_db_settings()
 network_settings = get_network_settings()
@@ -32,6 +34,9 @@ app.add_middleware(
     allow_methods=["*"],            # Allows all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],            # Allows all request headers
 )
+app.add_middleware(NetworkLoggingMiddleware)
+#The middleware is a class that intercepts every HTTP request before it comes to my gateway
+#With that, the logging is done.
 if db_settings.IN_MEMORY:
     main_repo_instance = InMemoryMailbox()
     owner_repo_instance = InMemoryOwnerRepo()

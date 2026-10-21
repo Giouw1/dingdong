@@ -11,8 +11,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 2. Create database directory for SQLite storage
-RUN mkdir -p /app/databases
+# 2. Create database and logging directories
+RUN mkdir -p /app/databases /app/data/logging
 
 # 3. Copy application code
 COPY ./app ./app

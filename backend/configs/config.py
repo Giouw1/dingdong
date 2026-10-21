@@ -1,7 +1,9 @@
 import logging.config
+import logging.handlers
 import os
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import AliasChoices, Field
 from pathlib import Path
 ENV = os.getenv("APP_ENV", "development")
 class EnvSettings(BaseSettings):
@@ -37,8 +39,12 @@ class DatabaseSettings(BaseSettings):
         extra="ignore"
     )
 class LogSettings(BaseSettings):
-    log_level: str = "DEBUG"
-    max_retries: int = 3
+    log_level: str = Field(default="INFO", validation_alias=AliasChoices("LOG_LEVEL", "log_level", "LOG_LOG_LEVEL"))
+    max_retries: int = Field(default=3, validation_alias=AliasChoices("MAX_RETRIES", "max_retries", "LOG_MAX_RETRIES"))
+    LOG_DIR: Path = Field(default=Path("data/logging"), validation_alias=AliasChoices("LOG_DIR", "log_dir", "LOG_LOG_DIR"))
+    LOG_FILE: str = Field(default="network.log", validation_alias=AliasChoices("LOG_FILE", "log_file", "LOG_LOG_FILE"))
+    MAX_BYTES: int = Field(default=10 * 1024 * 1024, validation_alias=AliasChoices("MAX_BYTES", "max_bytes", "LOG_MAX_BYTES"))
+    BACKUP_COUNT: int = Field(default=5, validation_alias=AliasChoices("BACKUP_COUNT", "backup_count", "LOG_BACKUP_COUNT"))
     
     model_config = SettingsConfigDict(
         env_file=f".env.{ENV}",
@@ -83,11 +89,19 @@ def setup_logging() -> None:
     """
     settings = get_log_settings()
     
+    base_dir = Path(__file__).resolve().parent.parent
+    log_dir = settings.LOG_DIR if settings.LOG_DIR.is_absolute() else (base_dir / settings.LOG_DIR)
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file_path = log_dir / settings.LOG_FILE
+    
     LOGGING_CONFIG = {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
             "standard": {
+                "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+            },
+            "network": {
                 "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
             },
         },
@@ -97,19 +111,27 @@ def setup_logging() -> None:
                 "formatter": "standard",
                 "level": settings.log_level.upper(),
             },
+            "network_file": {
+                "class": "logging.handlers.RotatingFileHandler",
+                "filename": str(log_file_path),
+                "formatter": "network",
+                "level": settings.log_level.upper(),
+                "encoding": "utf-8",
+                "maxBytes": settings.MAX_BYTES,
+                "backupCount": settings.BACKUP_COUNT,
+            },
+        },
+        "loggers": {
+            "network": {
+                "handlers": ["network_file", "console"],
+                "level": settings.log_level.upper(),
+                "propagate": False,
+            },
         },
         "root": {
             "handlers": ["console"],
             "level": settings.log_level.upper(),
         },
-        "file": {
-                "class": "logging.FileHandler",
-                "filename": "execution.log",
-                "formatter": "standard",
-                "level": settings.log_level.upper(),
-                "encoding": "utf-8",
-                "mode": "w", # "a" for append, "w" for overwrite
-            },
     }
     
     logging.config.dictConfig(LOGGING_CONFIG)

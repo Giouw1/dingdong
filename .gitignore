@@ -26,3 +26,8 @@ READDEV.MD
 .DS_Store
 Thumbs.db
 *.code-workspace
+
+# Logs
+*.log
+backend/data/logging/*.log
+!backend/data/logging/.gitkeep

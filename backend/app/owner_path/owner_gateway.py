@@ -182,8 +182,9 @@ async def delete_user(userdata: HTTPBasicCredentials = Depends(security),
                 status_code=status.HTTP_401_UNAUTHORIZED, 
     )
     try:
-        return usecases.delete_user(username=username,password=password,owner_id=owner_id)
+        retrieval = usecases.delete_user(username=username,password=password,owner_id=owner_id)
         store.remove_token(opaque_token=opaque_owner_id)
+        return retrieval
     except AuthenticationError:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot exclude a login different than yours")
     except ResourceNotFoundError:

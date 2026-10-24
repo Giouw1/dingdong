@@ -14,6 +14,7 @@ from app.notification_path.notif_gateway import notif_router
 from app.notification_path.notif_use_cases import Notificator_UseCases, get_notifier_use_cases
 from configs.config import get_frontend_settings, get_db_settings, get_network_settings, get_log_settings, get_env_settings, setup_logging
 from app.infrastructure.logging_middleware import NetworkLoggingMiddleware
+from app.infrastructure.inmemoryeventbus import InMemoryEventBus, get_main_event_bus
 
 # Inicialização do logging
 setup_logging()
@@ -22,50 +23,57 @@ db_settings = get_db_settings()
 network_settings = get_network_settings()
 env_settings = get_env_settings()
 frontend_settings = get_frontend_settings()
+
 app = FastAPI()
-#Parte de CORS, verificar e usar nas configurações antes de jogar a público.
-origins = [
-"*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,          # Allows specified domains
-    allow_credentials=True,         # Allows cookies and credentials
-    allow_methods=["*"],            # Allows all HTTP methods (GET, POST, etc.)
-    allow_headers=["*"],            # Allows all request headers
+    allow_origins=network_settings.ALLOWED_ORIGINS,  # Loaded from configs/env
+    allow_credentials=True,                         # Allows cookies and credentials
+    allow_methods=["*"],                            # Allows all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],                            # Allows all request headers
 )
 app.add_middleware(NetworkLoggingMiddleware)
-#The middleware is a class that intercepts every HTTP request before it comes to my gateway
-#With that, the logging is done.
+
 if db_settings.IN_MEMORY:
     main_repo_instance = InMemoryMailbox()
     owner_repo_instance = InMemoryOwnerRepo()
     id_generator_instance = MockID_Generator(owner_repo_instance)
+    event_bus_instance = InMemoryEventBus()
 else:
     main_repo_instance = SQLite3Mailbox(db_path=db_settings.DB_PATH)
     owner_repo_instance = SQLite3OwnerRepo(db_path=db_settings.DB_PATH)
     id_generator_instance = SQLite3IDGenerator(repository=owner_repo_instance)
-    
+    event_bus_instance = InMemoryEventBus()
+
 token_store_instance = OpaqueTokenStore()
 owner_use_cases = OwnerUseCases(notifmailbox=main_repo_instance, ownermailbox=owner_repo_instance, id_generator=id_generator_instance)
-notificator_use_cases = Notificator_UseCases(ownermailbox=owner_repo_instance,notifmailbox=main_repo_instance)
+notificator_use_cases = Notificator_UseCases(ownermailbox=owner_repo_instance, notifmailbox=main_repo_instance, event_bus=event_bus_instance)
 
 app.dependency_overrides[get_notifier_use_cases] = lambda: notificator_use_cases
 app.dependency_overrides[get_opaque_token_store] = lambda: token_store_instance
 app.dependency_overrides[get_owner_use_cases] = lambda: owner_use_cases
 app.dependency_overrides[get_env_settings] = lambda: env_settings
+app.dependency_overrides[get_main_event_bus] = lambda: event_bus_instance
+
 app.include_router(router=owner_router, prefix=network_settings.OWNER_ROUTE_PATH, tags=["Owners"])
-app.include_router(router=notif_router,prefix=network_settings.NOTIF_ROUTE_PATH,tags=["Notifications"])
+app.include_router(router=notif_router, prefix=network_settings.NOTIF_ROUTE_PATH, tags=["Notifications"])
 
 @app.get("/", status_code=status.HTTP_200_OK, response_class=FileResponse, tags=["Frontend"])
 async def return_html_page():
-    file_path =  frontend_settings.FRONTEND_PATH / "frontend.html"
+    file_path = frontend_settings.FRONTEND_PATH / "frontend.html"
     return FileResponse(path=file_path, media_type="text/html")
 
 @app.get("/notify", status_code=status.HTTP_200_OK, response_class=FileResponse, tags=["Frontend"])
 @app.get("/notify.html", status_code=status.HTTP_200_OK, response_class=FileResponse, tags=["Frontend"])
 async def return_notify_page():
     file_path = frontend_settings.FRONTEND_PATH / "notify.html"
+    return FileResponse(path=file_path, media_type="text/html")
+
+@app.get("/notified", status_code=status.HTTP_200_OK, response_class=FileResponse, tags=["Frontend"])
+@app.get("/notified.html", status_code=status.HTTP_200_OK, response_class=FileResponse, tags=["Frontend"])
+async def return_notified_page():
+    file_path = frontend_settings.FRONTEND_PATH / "notified.html"
     return FileResponse(path=file_path, media_type="text/html")
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ from main import app
 from configs.config import get_log_settings, setup_logging
 
 
-def test_network_logging_records_requests_and_responses():
+def test_network_logging_records_requests_and_responses(client:TestClient):
     # Garante que o logging esteja configurado
     setup_logging()
     settings = get_log_settings()

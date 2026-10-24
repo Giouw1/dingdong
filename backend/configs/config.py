@@ -3,9 +3,10 @@ import logging.handlers
 import os
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, field_validator
+from typing import Any
 from pathlib import Path
-ENV = os.getenv("APP_ENV", "development")
+ENV = os.getenv(key="APP_ENV", default="example")
 class EnvSettings(BaseSettings):
     IS_PRODUCTION: bool = False
     model_config = SettingsConfigDict(
@@ -18,7 +19,28 @@ class NetworkSettings(BaseSettings):
     SERVER_HOST: str = "127.0.0.1"
     SERVER_PORT: int = 8000
     NOTIF_ROUTE_PATH: str = "/notifications"
-    OWNER_ROUTE_PATH: str = "/owner"    
+    OWNER_ROUTE_PATH: str = "/owner"
+    ALLOWED_ORIGINS: list[str] | str = Field(
+        default=[
+            "http://localhost:8000",
+            "http://127.0.0.1:8000",
+            "http://localhost:5500",
+            "http://127.0.0.1:5500",
+        ],
+        validation_alias=AliasChoices("ALLOWED_ORIGINS", "NETWORK_ALLOWED_ORIGINS", "allowed_origins")
+    )
+
+    @field_validator("ALLOWED_ORIGINS", mode="after")
+    @classmethod
+    def parse_allowed_origins(cls, v: Any) -> list[str]:
+        if isinstance(v, str):
+            v = v.strip()
+            if v.startswith("[") and v.endswith("]"):
+                import json
+                return json.loads(v)
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
+
     model_config = SettingsConfigDict(
         env_file=f".env.{ENV}",
         env_file_encoding="utf-8",

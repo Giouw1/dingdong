@@ -63,35 +63,25 @@ jobs:
           cache-to: type=gha,mode=max
 
 
-
   deploy:
     needs: build-and-push
     # Executa o deploy EXCLUSIVAMENTE quando o commit entrar de fato na main
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - name: Login na Azure
-        uses: azure/login@v2
+      - name: Deploy na Oracle VM via SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Deploy no Azure Container Instance
-        uses: azure/aci-deploy@v1
-        with:
-          resource-group: dingdongbackend
-          name: backend
-          image: ghcr.io/${{ env.IMAGE_NAME }}:latest
-          registry-login-server: ghcr.io
-          registry-username: ${{ github.actor }}
-          registry-password: ${{ secrets.DEPLOY_GHCR_TOKEN }}
-          environment-variables: ${{vars.CONTAINER_ENV_VARIABLES}}
-          location: 'chilecentral'
-          dns-name-label: dingdong-backend-giou
-          ports: 8000
-          azure-file-volume-account-name: ${{ secrets.AZURE_STORAGE_NAME }}
-          azure-file-volume-account-key: ${{ secrets.AZURE_STORAGE_KEY }}
-          azure-file-volume-share-name: 'dingdong-share'
-          azure-file-volume-mount-path: '/app/data'
+          host: ${{ secrets.ORACLE_VM_HOST }}
+          username: ${{ secrets.ORACLE_VM_USER }}
+          key: ${{ secrets.ORACLE_VM_SSH_KEY }}
+          script: |
+            echo "${{ secrets.DEPLOY_GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull ghcr.io/${{ env.IMAGE_NAME }}:latest
+            cd ~/configs
+            docker compose up -d
 
+  
 
 
 

@@ -6,6 +6,7 @@ from app.infrastructure.sqllitemailbox import SQLite3Mailbox
 from app.infrastructure.inmemorymailbox import InMemoryMailbox
 from app.infrastructure.inmemoryownerrepo import InMemoryOwnerRepo, MockID_Generator
 from app.domain.abstract_usecases import AbstractHasher
+from app.infrastructure.inmemoryeventbus import InMemoryEventBus
 import os
 def pytest_configure(config):
     """
@@ -82,6 +83,8 @@ def mock_id_generator(mock_owner_repo: AbstractOwnerRepository) -> AbstractIDGen
     if isinstance(mock_owner_repo, SQLite3OwnerRepo):
         return SQLite3IDGenerator(repository=mock_owner_repo)
     return MockID_Generator(mock_owner_repo)
-
+@pytest.fixture
+def mock_event_bus():
+    return InMemoryEventBus()
 
 

@@ -1,8 +1,7 @@
 from fastapi.testclient import TestClient
 from main import app
 
-def test_full_user_flow_end_to_end():
-    client = TestClient(app)
+def test_full_user_flow_end_to_end(client:TestClient):
 
     # 1. Owner accesses root HTML page
     response_root = client.get("/")

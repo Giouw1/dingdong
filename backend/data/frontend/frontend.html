@@ -325,6 +325,89 @@
             height: auto;
         }
 
+        /* Printable QR Plate Styles */
+        .qr-plate {
+            background: #ffffff;
+            color: #0f172a;
+            border-radius: var(--radius-md);
+            padding: 18px 14px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+            margin-bottom: 14px;
+            transition: var(--transition);
+        }
+
+        .qr-plate-header {
+            margin-bottom: 10px;
+        }
+
+        .qr-plate-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 2px;
+            word-break: break-word;
+        }
+
+        .qr-plate-subtitle {
+            font-size: 0.72rem;
+            color: #64748b;
+        }
+
+        .qr-plate-qr {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+            min-height: 180px;
+        }
+
+        .qr-plate-qr canvas, .qr-plate-qr img {
+            display: block;
+            margin: 0 auto;
+        }
+
+        .qr-plate-footer {
+            margin-top: 10px;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 8px;
+        }
+
+        .qr-plate-nick {
+            display: inline-block;
+            background: #f1f5f9;
+            color: #334155;
+            font-weight: 700;
+            font-size: 0.78rem;
+            padding: 2px 10px;
+            border-radius: 999px;
+            margin-bottom: 4px;
+        }
+
+        .qr-plate-hint {
+            font-size: 0.68rem;
+            color: #94a3b8;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            #ownerQrPlate, #ownerQrPlate * {
+                visibility: visible !important;
+            }
+            #ownerQrPlate {
+                position: fixed !important;
+                left: 50% !important;
+                top: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                width: 320px !important;
+                box-shadow: none !important;
+                border: 2px solid #000 !important;
+            }
+        }
+
         /* Notifications List */
         .controls-bar {
             display: flex;
@@ -615,14 +698,29 @@
                         <div class="form-group" style="margin-bottom: 12px;">
                             <label style="font-size: 0.75rem;">Destino do QR Code:</label>
                             <select id="qrTargetType" class="input-control" style="font-size: 0.85rem; padding: 6px 10px;" onchange="renderOwnerQRCode(authenticatedNickname)">
-                                <option value="doorbell" selected>📱 Página da Campainha (notify.html - Recomendado)</option>
-                                <option value="api">⚡ Endpoint Direto da API (/notifications/notificate)</option>
+                                <option value="ring" selected>⚡ Toque Instantâneo ao Escanear (/notifications/ring - Recomendado)</option>
+                                <option value="doorbell">📱 Página com Formulário (/notify.html)</option>
                             </select>
                         </div>
 
-                        <!-- QR Code Render Container -->
-                        <div class="qr-box-wrapper">
-                            <div id="ownerQrCodeCanvas"></div>
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label style="font-size: 0.75rem;">Mensagem Superior da Plaqueta:</label>
+                            <input type="text" id="qrPlateCustomMessage" class="input-control" value="🔔 Toque a Campainha ao Chegar" placeholder="Ex: Toque a Campainha ao Chegar" oninput="updateQrPlateDisplay()" style="font-size: 0.85rem; padding: 6px 10px;" />
+                        </div>
+
+                        <!-- Plaqueta da Campainha (Printable Plate) -->
+                        <div class="qr-plate" id="ownerQrPlate">
+                            <div class="qr-plate-header">
+                                <div class="qr-plate-title" id="plateHeaderMessage">🔔 Toque a Campainha ao Chegar</div>
+                                <div class="qr-plate-subtitle">Aponte a câmera do seu celular para tocar</div>
+                            </div>
+                            <div class="qr-plate-qr">
+                                <div id="ownerQrCodeCanvas"></div>
+                            </div>
+                            <div class="qr-plate-footer">
+                                <div class="qr-plate-nick" id="plateNicknameLabel">@usuario</div>
+                                <div class="qr-plate-hint">Notificação instantânea enviada ao morador</div>
+                            </div>
                         </div>
 
                         <div class="form-group" style="margin-bottom: 12px;">
@@ -633,9 +731,13 @@
                             </div>
                         </div>
 
+                        <div class="btn-row" style="margin-bottom: 8px;">
+                            <button class="btn btn-primary" style="font-size: 0.82rem;" onclick="downloadOwnerPlatePNG()" title="Baixar a plaqueta completa com moldura e mensagem">🖼️ Baixar Plaqueta (PNG)</button>
+                            <button class="btn btn-secondary" style="font-size: 0.82rem;" onclick="printOwnerPlate()" title="Imprimir a plaqueta física para colar na porta">🖨️ Imprimir Plaqueta</button>
+                        </div>
                         <div class="btn-row">
-                            <button class="btn btn-primary" style="font-size: 0.82rem;" onclick="downloadOwnerQRCode()">💾 Baixar PNG</button>
-                            <button class="btn btn-secondary" style="font-size: 0.82rem;" onclick="triggerTestPing()" title="Disparar notificação de teste para o seu próprio QR code">🔔 Testar</button>
+                            <button class="btn btn-secondary" style="font-size: 0.82rem;" onclick="downloadOwnerQRCode()" title="Baixar apenas o QR Code quadrado">💾 Apenas QR Code</button>
+                            <button class="btn btn-secondary" style="font-size: 0.82rem;" onclick="triggerTestPing()" title="Disparar toque de teste para o seu próprio QR code">🔔 Testar Toque</button>
                         </div>
                     </div>
 
@@ -655,10 +757,9 @@
             <section class="card" id="mailboxCard" style="display: none;">
                 <div class="card-title">
                     <span>Caixa Postal (Notificações)</span>
-                    <label class="toggle-wrapper">
-                        <input type="checkbox" id="autoRefreshToggle" onchange="toggleAutoRefresh(this.checked)" />
-                        Auto-atualizar (5s)
-                    </label>
+                    <span id="sseConnectionBadge" style="display: none; font-size: 0.75rem; padding: 4px 10px; border-radius: 999px; font-weight: 500; align-items: center; gap: 5px;">
+                        ● Tempo Real
+                    </span>
                 </div>
 
                 <!-- Controls Bar: Pagination / Fetch -->
@@ -774,7 +875,7 @@
         // State Management
         let currentAuthMode = 'login'; // 'login' | 'register'
         let authenticatedNickname = null;
-        let autoRefreshIntervalId = null;
+        let sseEventSource = null;
 
         // Check protocol and host on load
         window.addEventListener('DOMContentLoaded', () => {
@@ -815,10 +916,11 @@
             }
         }
 
-        function getNotificationRouteUrl(nickname, isDoorbellPage = true) {
+        function getNotificationRouteUrl(nickname, qrTargetType = 'ring') {
             const baseUrl = getBaseUrl();
-            if (isDoorbellPage) {
-                // If the app is served via FastAPI, the route is /notify
+            if (qrTargetType === 'ring' || qrTargetType === false) {
+                return `${baseUrl}/notifications/ring?nickname=${encodeURIComponent(nickname)}`;
+            } else if (qrTargetType === 'doorbell' || qrTargetType === true) {
                 const currentOrigin = (window.location.origin && window.location.origin !== 'null' && window.location.protocol.startsWith('http'))
                     ? window.location.origin
                     : baseUrl;
@@ -907,16 +1009,133 @@
                 if (activeBox) activeBox.style.display = 'block';
                 if (emptyBox) emptyBox.style.display = 'none';
 
-                const qrType = document.getElementById('qrTargetType')?.value || 'doorbell';
-                const isDoorbell = qrType === 'doorbell';
-                const url = getNotificationRouteUrl(nickname, isDoorbell);
+                const targetType = document.getElementById('qrTargetType')?.value || 'ring';
+                const url = getNotificationRouteUrl(nickname, targetType);
                 document.getElementById('encodedRouteUrl').value = url;
+
+                const plateNick = document.getElementById('plateNicknameLabel');
+                if (plateNick) plateNick.innerText = `@${nickname}`;
+                updateQrPlateDisplay();
+
                 generateQRCode('ownerQrCodeCanvas', url, 180);
             } else {
                 if (activeBox) activeBox.style.display = 'none';
                 if (emptyBox) emptyBox.style.display = 'block';
                 document.getElementById('encodedRouteUrl').value = '';
             }
+        }
+
+        function updateQrPlateDisplay() {
+            const msgInput = document.getElementById('qrPlateCustomMessage');
+            const headerDisplay = document.getElementById('plateHeaderMessage');
+            if (msgInput && headerDisplay) {
+                const val = msgInput.value.trim();
+                headerDisplay.innerText = val ? val : '🔔 Toque a Campainha ao Chegar';
+            }
+        }
+
+        function downloadOwnerPlatePNG() {
+            const nickname = authenticatedNickname || 'meu_usuario';
+            const canvasContainer = document.getElementById('ownerQrCodeCanvas');
+            if (!canvasContainer) return;
+
+            const qrCanvas = canvasContainer.querySelector('canvas');
+            const qrImg = canvasContainer.querySelector('img');
+            const customMsg = document.getElementById('qrPlateCustomMessage')?.value.trim() || '🔔 Toque a Campainha ao Chegar';
+
+            const plateCanvas = document.createElement('canvas');
+            const ctx = plateCanvas.getContext('2d');
+            const width = 420;
+            const height = 480;
+            plateCanvas.width = width;
+            plateCanvas.height = height;
+
+            // Background & Border
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(8, 8, width - 16, height - 16);
+
+            // Header Title Message
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 18px "Segoe UI", system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(customMsg, width / 2, 48);
+
+            // Subtitle
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px "Segoe UI", system-ui, sans-serif';
+            ctx.fillText('Aponte a câmera do seu celular para tocar', width / 2, 74);
+
+            // QR code placement
+            const qrSize = 200;
+            const qrX = (width - qrSize) / 2;
+            const qrY = 96;
+
+            function finishPlateExport() {
+                // Divider line
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(25, 330);
+                ctx.lineTo(width - 25, 330);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Pill for Nickname
+                const nickText = `@${nickname}`;
+                ctx.font = 'bold 14px "Segoe UI", system-ui, sans-serif';
+                const textWidth = ctx.measureText(nickText).width;
+                const pillWidth = textWidth + 24;
+                const pillHeight = 28;
+                const pillX = (width - pillWidth) / 2;
+                const pillY = 350;
+
+                ctx.fillStyle = '#f1f5f9';
+                if (ctx.roundRect) {
+                    ctx.beginPath();
+                    ctx.roundRect(pillX, pillY, pillWidth, pillHeight, 14);
+                    ctx.fill();
+                } else {
+                    ctx.fillRect(pillX, pillY, pillWidth, pillHeight);
+                }
+
+                ctx.fillStyle = '#334155';
+                ctx.fillText(nickText, width / 2, pillY + 19);
+
+                // Footer hint
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '11px "Segoe UI", system-ui, sans-serif';
+                ctx.fillText('Notificação instantânea enviada ao morador • Projeto QR', width / 2, 415);
+
+                // Download link
+                const link = document.createElement('a');
+                link.download = `plaqueta_campainha_${nickname}.png`;
+                link.href = plateCanvas.toDataURL('image/png');
+                link.click();
+                showToast('Plaqueta da campainha baixada com sucesso!', 'success');
+            }
+
+            if (qrCanvas) {
+                ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+                finishPlateExport();
+            } else if (qrImg) {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+                    finishPlateExport();
+                };
+                img.src = qrImg.src;
+            } else {
+                showToast('Não foi possível capturar o QR Code para a plaqueta.', 'error');
+            }
+        }
+
+        function printOwnerPlate() {
+            window.print();
         }
 
         function downloadOwnerQRCode() {
@@ -943,14 +1162,14 @@
             }
             const baseUrl = getBaseUrl();
             try {
-                const response = await fetch(`${baseUrl}/notifications/notificate?nickname=${encodeURIComponent(authenticatedNickname)}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ payload: `Disparo de teste via QR Code às ${new Date().toLocaleTimeString('pt-BR')}` })
+                const response = await fetch(`${baseUrl}/notifications/ring?nickname=${encodeURIComponent(authenticatedNickname)}`, {
+                    method: 'GET',
+                    headers: { 'Cache-Control': 'no-cache, no-store' },
+                    cache: 'no-store'
                 });
-                if (response.status === 204) {
-                    showToast('Disparo de teste efetuado com sucesso!', 'success');
-                    setTimeout(() => handleFetchNotifications(true), 300);
+                if (response.ok) {
+                    showToast('🔔 Campainha acionada via /notifications/ring com sucesso!', 'success');
+                    setTimeout(() => handleFetchNotifications(true), 400);
                 } else {
                     const err = await response.text();
                     showToast(`Erro no disparo: ${err}`, 'error');
@@ -1118,6 +1337,7 @@
             document.getElementById('mainLayout').classList.add('dashboard-active');
 
             updateNicknameUI(nickname);
+            startSSEConnection();
         }
 
         function updateNicknameUI(nickname) {
@@ -1154,12 +1374,7 @@
             }
 
             // Reset local state & UI
-            if (autoRefreshIntervalId) {
-                clearInterval(autoRefreshIntervalId);
-                autoRefreshIntervalId = null;
-                const toggle = document.getElementById('autoRefreshToggle');
-                if (toggle) toggle.checked = false;
-            }
+            stopSSEConnection();
 
             authenticatedNickname = null;
             document.getElementById('profileCard').style.display = 'none';
@@ -1235,12 +1450,7 @@
                     showToast('Conta excluída com sucesso!', 'success');
 
                     // Reset local session & UI
-                    if (autoRefreshIntervalId) {
-                        clearInterval(autoRefreshIntervalId);
-                        autoRefreshIntervalId = null;
-                        const toggle = document.getElementById('autoRefreshToggle');
-                        if (toggle) toggle.checked = false;
-                    }
+                    stopSSEConnection();
 
                     authenticatedNickname = null;
                     document.getElementById('profileCard').style.display = 'none';
@@ -1484,21 +1694,93 @@
             }).join('');
         }
 
-        // Toggle Auto-Refresh
-        function toggleAutoRefresh(enabled) {
-            if (autoRefreshIntervalId) {
-                clearInterval(autoRefreshIntervalId);
-                autoRefreshIntervalId = null;
+        // SSE Real-Time Streaming Controller
+        function startSSEConnection() {
+            stopSSEConnection();
+            const baseUrl = getBaseUrl();
+            const badge = document.getElementById('sseConnectionBadge');
+
+            try {
+                sseEventSource = new EventSource(`${baseUrl}/owner/stream_notifications`, {
+                    withCredentials: true
+                });
+
+                sseEventSource.onopen = () => {
+                    if (badge) {
+                        badge.style.display = 'inline-flex';
+                        badge.style.background = 'rgba(34, 197, 94, 0.15)';
+                        badge.style.color = '#22c55e';
+                        badge.style.border = '1px solid rgba(34, 197, 94, 0.3)';
+                        badge.innerHTML = '● Tempo Real (Conectado)';
+                    }
+                };
+
+                sseEventSource.onmessage = (event) => {
+                    try {
+                        const notif = JSON.parse(event.data);
+                        handleIncomingLiveNotification(notif);
+                    } catch (err) {
+                        console.warn('Erro ao decodificar notificação SSE:', err, event.data);
+                    }
+                };
+
+                sseEventSource.onerror = () => {
+                    if (badge) {
+                        badge.style.display = 'inline-flex';
+                        badge.style.background = 'rgba(239, 68, 68, 0.15)';
+                        badge.style.color = '#ef4444';
+                        badge.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                        badge.innerHTML = '○ Reconectando...';
+                    }
+                };
+            } catch (err) {
+                console.error('Falha ao iniciar SSE:', err);
+            }
+        }
+
+        function stopSSEConnection() {
+            if (sseEventSource) {
+                sseEventSource.close();
+                sseEventSource = null;
+            }
+            const badge = document.getElementById('sseConnectionBadge');
+            if (badge) badge.style.display = 'none';
+        }
+
+        function handleIncomingLiveNotification(item) {
+            const listEl = document.getElementById('notificationsList');
+            const emptyState = listEl.querySelector('.empty-state');
+            if (emptyState) {
+                listEl.innerHTML = '';
             }
 
-            if (enabled) {
-                showToast('Atualização automática ativada (a cada 5s).', 'info');
-                autoRefreshIntervalId = setInterval(() => {
-                    handleFetchNotifications(true);
-                }, 5000);
+            let content = '';
+            let isRead = false;
+            let timestamp = new Date().toLocaleString('pt-BR');
+
+            if (typeof item === 'object' && item !== null) {
+                content = item.conteudo || item.payload || JSON.stringify(item);
+                isRead = Boolean(item.lida);
+                if (item.timestamp) {
+                    try {
+                        timestamp = new Date(item.timestamp).toLocaleString('pt-BR');
+                    } catch (_) {}
+                }
             } else {
-                showToast('Atualização automática desativada.', 'info');
+                content = String(item);
             }
+
+            const itemHtml = `
+                <div class="notif-item" style="border-left: 3px solid var(--accent-green); background: rgba(34, 197, 94, 0.05); transition: all 0.3s ease;">
+                    <div class="notif-header">
+                        <span class="notif-status unread">● Nova (Agora)</span>
+                        <span>${escapeHtml(timestamp)}</span>
+                    </div>
+                    <div class="notif-content">${escapeHtml(content)}</div>
+                </div>
+            `;
+            listEl.insertAdjacentHTML('afterbegin', itemHtml);
+            showToast(`Nova notificação: "${content.substring(0, 30)}${content.length > 30 ? '...' : ''}"`, 'info');
         }
 
         // Handle Send Public Notification (QR Simulation)
@@ -1528,10 +1810,7 @@
                     showToast(`Notificação enviada com sucesso para "${nickname}"!`, 'success');
                     document.getElementById('notifPayload').value = '';
 
-                    // If we sent to our own active nickname, auto-refresh the list
-                    if (authenticatedNickname && nickname === authenticatedNickname) {
-                        setTimeout(() => handleFetchNotifications(true), 300);
-                    }
+                    // Real-time update happens automatically via SSE!
                 } else if (response.status === 404) {
                     showToast(`Destinatário não encontrado: Nickname "${nickname}" inexistente.`, 'error');
                 } else if (response.status === 400) {

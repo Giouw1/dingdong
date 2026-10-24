@@ -19,3 +19,22 @@ services:
 volumes:
   sqlite_data:
     driver: local
+#Below is the oracle version of the compose
+#services:
+#  backend:
+#    image: ghcr.io/giouw1/dingdongbackend:latest
+#    container_name: dingdong_backend
+#    restart: unless-stopped
+#    ports:
+#      - "8000:8000"
+#    env_file:
+#      - ../.env
+#    volumes:
+#      - ../data/databases:/app/data/databases
+#      - ../data/frontend:/app/data/frontend:ro
+#      - ../data/logging:/app/data/logging
+
+  
+#volumes:
+#  sqlite_data:
+#    driver: local

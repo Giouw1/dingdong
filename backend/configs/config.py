@@ -10,7 +10,7 @@ ENV = os.getenv(key="APP_ENV", default="example")
 class EnvSettings(BaseSettings):
     IS_PRODUCTION: bool = False
     model_config = SettingsConfigDict(
-        env_file=f".env.{ENV}",
+        env_file=(".env", f".env.{ENV}"),
         env_file_encoding="utf-8",
         extra="ignore"
     )
@@ -42,7 +42,7 @@ class NetworkSettings(BaseSettings):
         return v
 
     model_config = SettingsConfigDict(
-        env_file=f".env.{ENV}",
+        env_file=(".env", f".env.{ENV}"),
         env_file_encoding="utf-8",
         extra="ignore"
     )
@@ -56,7 +56,7 @@ class DatabaseSettings(BaseSettings):
     DB_PATH: str = "databases/app.db"
     
     model_config = SettingsConfigDict(
-        env_file=f".env.{ENV}",
+        env_file=(".env", f".env.{ENV}"),
         env_file_encoding="utf-8",
         extra="ignore"
     )
@@ -69,7 +69,7 @@ class LogSettings(BaseSettings):
     BACKUP_COUNT: int = Field(default=5, validation_alias=AliasChoices("BACKUP_COUNT", "backup_count", "LOG_BACKUP_COUNT"))
     
     model_config = SettingsConfigDict(
-        env_file=f".env.{ENV}",
+        env_file=(".env", f".env.{ENV}"),
         env_prefix="LOG_", 
         env_file_encoding="utf-8",
         extra="ignore"
@@ -78,7 +78,7 @@ class FrontendSettings(BaseSettings):
     FRONTEND_PATH: Path = Path("data/frontend")
 
     model_config = SettingsConfigDict(
-        env_file=f".env.{ENV}",
+        env_file=(".env", f".env.{ENV}"),
         env_file_encoding="utf-8",
         extra="ignore"
     )

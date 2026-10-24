@@ -20,7 +20,13 @@ env:
   IMAGE_NAME: giouw1/dingdongbackend
 
 jobs:
+  ci-test:
+    name: Executar Testes do CI
+    uses: ./.github/workflows/backendci.yml
+
   build-and-push:
+    name: Build e Push Docker (GHCR)
+    needs: ci-test
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -64,6 +70,7 @@ jobs:
 
 
   deploy:
+    name: Deploy na Oracle VM
     needs: build-and-push
     # Executa o deploy EXCLUSIVAMENTE quando o commit entrar de fato na main
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -78,7 +85,7 @@ jobs:
           script: |
             echo "${{ secrets.DEPLOY_GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull ghcr.io/${{ env.IMAGE_NAME }}:latest
-            cd ~/configs
+            cd /mnt/volume/configs
             docker compose up -d
 
   

@@ -36,6 +36,9 @@ jobs:
       - name: Checkout do repositório
         uses: actions/checkout@v4
 
+      - name: Configurar QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Configurar Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -61,13 +64,13 @@ jobs:
         with:
           context: backend/
           file: ./backend/Dockerfile
+          platforms: linux/amd64,linux/arm64
           # Só envia a imagem se for o push final na main, nunca no PR
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
 
   deploy:
     name: Deploy na Oracle VM
@@ -87,12 +90,3 @@ jobs:
             docker pull ghcr.io/${{ env.IMAGE_NAME }}:latest
             cd /mnt/volume/configs
             docker compose up -d
-
-  
-
-
-
-
-
-
-

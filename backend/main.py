@@ -59,8 +59,7 @@ app.dependency_overrides[get_main_event_bus] = lambda: event_bus_instance
 
 app.include_router(router=owner_router, prefix=network_settings.OWNER_ROUTE_PATH, tags=["Owners"])
 app.include_router(router=notif_router, prefix=network_settings.NOTIF_ROUTE_PATH, tags=["Notifications"])
-app.mount(frontend_settings.FRONTEND_PATH, StaticFiles(directory=frontend_settings.FRONTEND_PATH), name="media")
-
+app.mount("/media", StaticFiles(directory=frontend_settings.FRONTEND_PATH), name="media")
 @app.get("/", status_code=status.HTTP_200_OK, response_class=FileResponse, tags=["Frontend"])
 async def return_html_page():
     file_path = frontend_settings.FRONTEND_PATH / "frontend.html"

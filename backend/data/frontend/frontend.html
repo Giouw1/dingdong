@@ -1693,7 +1693,7 @@
                 `;
             }).join('');
         }
-
+        const notificationSound = new Audio('./dragon-studio-doorbell-ding-dong-482879.mp3');
         // SSE Real-Time Streaming Controller
         function startSSEConnection() {
             stopSSEConnection();
@@ -1719,7 +1719,6 @@
                     try {
                         const notif = JSON.parse(event.data);
                         handleIncomingLiveNotification(notif);
-                        const soundEffect = new Audio('./dragon-studio-doorbell-ding-dong-482879.mp3');
                         soundEffect.currentTime = 0;
                         soundEffect.play();
                     } catch (err) {

@@ -15,7 +15,8 @@ from app.notification_path.notif_use_cases import Notificator_UseCases, get_noti
 from configs.config import get_frontend_settings, get_db_settings, get_network_settings, get_log_settings, get_env_settings, setup_logging
 from app.infrastructure.logging_middleware import NetworkLoggingMiddleware
 from app.infrastructure.inmemoryeventbus import InMemoryEventBus, get_main_event_bus
-
+#To mount staticfiles, makes the retrieval easier
+from fastapi.staticfiles import StaticFiles
 # Inicialização do logging
 setup_logging()
 
@@ -58,6 +59,7 @@ app.dependency_overrides[get_main_event_bus] = lambda: event_bus_instance
 
 app.include_router(router=owner_router, prefix=network_settings.OWNER_ROUTE_PATH, tags=["Owners"])
 app.include_router(router=notif_router, prefix=network_settings.NOTIF_ROUTE_PATH, tags=["Notifications"])
+app.mount(frontend_settings.FRONTEND_PATH, StaticFiles(directory=frontend_settings.FRONTEND_PATH), name="media")
 
 @app.get("/", status_code=status.HTTP_200_OK, response_class=FileResponse, tags=["Frontend"])
 async def return_html_page():

@@ -1719,6 +1719,9 @@
                     try {
                         const notif = JSON.parse(event.data);
                         handleIncomingLiveNotification(notif);
+                        const soundEffect = new Audio('./dragon-studio-doorbell-ding-dong-482879.mp3');
+                        soundEffect.currentTime = 0;
+                        soundEffect.play();
                     } catch (err) {
                         console.warn('Erro ao decodificar notificação SSE:', err, event.data);
                     }
